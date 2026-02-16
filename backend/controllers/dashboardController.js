@@ -5,7 +5,8 @@ import Transaction from '../models/Transaction.js';
 // @access  Private
 export const getSummary = async (req, res) => {
     try {
-        const today = new Date();
+        // Use client provided date if available, otherwise server time
+        const today = req.query.date ? new Date(req.query.date) : new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -156,7 +157,7 @@ export const getSummary = async (req, res) => {
 // @access  Private
 export const getSpendingTrend = async (req, res) => {
     try {
-        const daysAgo = new Date();
+        const daysAgo = req.query.date ? new Date(req.query.date) : new Date();
         daysAgo.setDate(daysAgo.getDate() - 30);
         daysAgo.setHours(0, 0, 0, 0);
 
@@ -218,7 +219,7 @@ export const getSpendingTrend = async (req, res) => {
 // @access  Private
 export const getCategoryDistribution = async (req, res) => {
     try {
-        const monthAgo = new Date();
+        const monthAgo = req.query.date ? new Date(req.query.date) : new Date();
         monthAgo.setMonth(monthAgo.getMonth() - 1);
 
         const distribution = await Transaction.aggregate([
@@ -259,7 +260,7 @@ export const getCategoryDistribution = async (req, res) => {
 // @access  Private
 export const getMonthlyComparison = async (req, res) => {
     try {
-        const sixMonthsAgo = new Date();
+        const sixMonthsAgo = req.query.date ? new Date(req.query.date) : new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
         sixMonthsAgo.setDate(1); // Start from first day
         sixMonthsAgo.setHours(0, 0, 0, 0);

@@ -72,11 +72,12 @@ export const receiptAPI = {
 };
 
 // Dashboard APIs
+// Dashboard APIs
 export const dashboardAPI = {
-    getSummary: () => API.get('/dashboard/summary'),
-    getTrend: () => API.get('/dashboard/trend'),
-    getCategoryDistribution: () => API.get('/dashboard/category-distribution'),
-    getMonthlyComparison: () => API.get('/dashboard/monthly-comparison'),
+    getSummary: (date) => API.get('/dashboard/summary', { params: { date } }),
+    getTrend: (date) => API.get('/dashboard/trend', { params: { date } }),
+    getCategoryDistribution: (date) => API.get('/dashboard/category-distribution', { params: { date } }),
+    getMonthlyComparison: (date) => API.get('/dashboard/monthly-comparison', { params: { date } }),
 };
 
 // Report APIs

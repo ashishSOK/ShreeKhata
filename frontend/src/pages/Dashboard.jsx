@@ -170,12 +170,15 @@ const Dashboard = () => {
 
     const loadDashboardData = async () => {
         try {
+            // Get local date in YYYY-MM-DD format
+            const localDate = new Date().toLocaleDateString('en-CA');
+
             // Artificial delay to prevent flash if response is too fast
             const [summaryRes, trendRes, catDistRes, monthlyRes] = await Promise.all([
-                dashboardAPI.getSummary(),
-                dashboardAPI.getTrend(),
-                dashboardAPI.getCategoryDistribution(),
-                dashboardAPI.getMonthlyComparison()
+                dashboardAPI.getSummary(localDate),
+                dashboardAPI.getTrend(localDate),
+                dashboardAPI.getCategoryDistribution(localDate),
+                dashboardAPI.getMonthlyComparison(localDate)
             ]);
 
             setSummary(summaryRes.data);
