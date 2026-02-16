@@ -231,13 +231,24 @@ const Ledger = () => {
 
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this transaction?')) {
+            // Optimistic UI update
+            const checkTransactions = [...transactions];
+            const updatedTransactions = transactions.filter(t => t._id !== id);
+            setTransactions(updatedTransactions);
+
+            // Show success immediately for better UX
+            setSuccess('Transaction deleted successfully');
+
             try {
                 await transactionAPI.delete(id);
-                setSuccess('Transaction deleted successfully');
-                loadTransactions();
+                // Background reload to ensure consistency (optional, but good for sync)
+                // loadTransactions(); 
             } catch (error) {
                 console.error('Error deleting transaction:', error);
+                // Revert changes if API fails
+                setTransactions(checkTransactions);
                 setError('Failed to delete transaction');
+                setSuccess(''); // Clear the success message
             }
         }
     };

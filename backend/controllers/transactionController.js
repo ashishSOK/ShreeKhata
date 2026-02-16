@@ -249,8 +249,8 @@ export const deleteTransaction = async (req, res) => {
         // Delete associated receipts
         const receipts = await Receipt.find({ transaction: transaction._id });
 
-        // Delete from Cloudinary and DB
-        const deletePromises = receipts.map(async (receipt) => {
+        // Delete from Cloudinary (Fire-and-forget, don't await)
+        receipts.forEach(async (receipt) => {
             if (receipt.cloudinaryId) {
                 try {
                     await cloudinary.uploader.destroy(receipt.cloudinaryId);
@@ -258,11 +258,14 @@ export const deleteTransaction = async (req, res) => {
                     console.error('Error deleting image from Cloudinary:', err);
                 }
             }
-            return receipt.deleteOne();
         });
 
-        await Promise.all(deletePromises);
-        console.log('Receipts deleted. Deleting transaction...');
+        // Delete receipts from DB immediately
+        if (receipts.length > 0) {
+            await Receipt.deleteMany({ transaction: transaction._id });
+        }
+
+        console.log('Receipts deletion initiated in background. Deleting transaction...');
 
         const transactionDate = transaction.date;
         await transaction.deleteOne();
