@@ -366,12 +366,32 @@ const Dashboard = () => {
                                             cx="50%"
                                             cy="50%"
                                             labelLine={false}
-                                            label={(entry) => entry.name}
-                                            outerRadius={90}
-                                            innerRadius={50}
+                                            label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                                                const RADIAN = Math.PI / 180;
+                                                const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                                                return percent > 0.05 ? (
+                                                    <text
+                                                        x={x}
+                                                        y={y}
+                                                        fill="white"
+                                                        textAnchor="middle"
+                                                        dominantBaseline="central"
+                                                        fontSize={14}
+                                                        fontWeight="bold"
+                                                        style={{ filter: 'drop-shadow(0px 0px 2px rgba(0,0,0,0.5))' }}
+                                                    >
+                                                        {`${(percent * 100).toFixed(0)}%`}
+                                                    </text>
+                                                ) : null;
+                                            }}
+                                            outerRadius={85}
+                                            innerRadius={40}
                                             fill="#8884d8"
                                             dataKey="value"
-                                            paddingAngle={3}
+                                            paddingAngle={2}
                                         >
                                             {categoryDist.map((entry, index) => (
                                                 <Cell
@@ -388,6 +408,14 @@ const Dashboard = () => {
                                                 borderRadius: 12,
                                                 boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
                                             }}
+                                            formatter={(value) => formatCurrency(value)}
+                                        />
+                                        <Legend
+                                            iconType="circle"
+                                            layout="horizontal"
+                                            verticalAlign="bottom"
+                                            align="center"
+                                            wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
                                         />
                                     </PieChart>
                                 </ResponsiveContainer>

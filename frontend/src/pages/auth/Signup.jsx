@@ -22,7 +22,10 @@ import {
     Person,
     Phone,
     ArrowBack,
+    Brightness4,
+    Brightness7,
 } from '@mui/icons-material';
+import { useThemeMode } from '../../theme/ThemeProvider';
 import { motion } from 'framer-motion';
 import AnalyticsSignupAnimation from '../../components/auth/AnalyticsSignupAnimation';
 import { useAuth } from '../../context/AuthContext';
@@ -30,6 +33,7 @@ import PageLoader from '../../components/common/PageLoader';
 
 const Signup = () => {
     const navigate = useNavigate();
+    const { mode, toggleTheme } = useThemeMode();
     const { signup } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -113,7 +117,7 @@ const Signup = () => {
     };
 
     return (
-        <Grid container sx={{ minHeight: '100vh', bgcolor: '#FFFFFF' }}>
+        <Grid container sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             {loading && <PageLoader message="Creating Account..." />}
             {/* Left Side - Form */}
             <Grid
@@ -133,19 +137,22 @@ const Signup = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6 }}
                 >
-                    <Box sx={{ position: 'absolute', top: 32, left: 32 }}>
+                    <Box sx={{ position: 'absolute', top: 32, left: 32, display: 'flex', gap: 2, alignItems: 'center' }}>
                         <Button
                             startIcon={<ArrowBack />}
                             onClick={() => navigate('/')}
                             sx={{
-                                color: '#64748B',
+                                color: 'text.secondary',
                                 textTransform: 'none',
                                 fontWeight: 600,
-                                '&:hover': { color: '#111827', bgcolor: 'transparent' },
+                                '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
                             }}
                         >
                             Back
                         </Button>
+                        <IconButton onClick={toggleTheme} sx={{ color: 'text.primary' }}>
+                            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                        </IconButton>
                     </Box>
 
                     <Box sx={{ mb: 6 }}>
@@ -153,14 +160,14 @@ const Signup = () => {
                             variant="h3"
                             sx={{
                                 fontWeight: 800,
-                                color: '#111827',
+                                color: 'text.primary',
                                 mb: 2,
                                 letterSpacing: '-0.02em',
                             }}
                         >
                             Create Account 🚀
                         </Typography>
-                        <Typography variant="body1" sx={{ color: '#64748B', fontSize: '1.1rem' }}>
+                        <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.1rem' }}>
                             Join us and start your journey today!
                         </Typography>
                     </Box>
@@ -190,14 +197,15 @@ const Signup = () => {
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: 2,
-                                        '& fieldset': { borderColor: '#E2E8F0' },
-                                        '&:hover fieldset': { borderColor: '#CBD5E1' },
+                                        backgroundColor: 'background.paper',
+                                        '& fieldset': { borderColor: 'divider' },
+                                        '&:hover fieldset': { borderColor: 'text.secondary' },
                                         '&.Mui-focused fieldset': {
-                                            borderColor: '#14B8A6',
+                                            borderColor: 'primary.main',
                                             borderWidth: 2,
                                         },
                                     },
-                                    '& .MuiInputLabel-root.Mui-focused': { color: '#14B8A6' },
+                                    '& .MuiInputLabel-root.Mui-focused': { color: 'primary.main' },
                                 }}
                             />
 
@@ -219,14 +227,15 @@ const Signup = () => {
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: 2,
-                                        '& fieldset': { borderColor: '#E2E8F0' },
-                                        '&:hover fieldset': { borderColor: '#CBD5E1' },
+                                        backgroundColor: 'background.paper',
+                                        '& fieldset': { borderColor: 'divider' },
+                                        '&:hover fieldset': { borderColor: 'text.secondary' },
                                         '&.Mui-focused fieldset': {
-                                            borderColor: '#14B8A6',
+                                            borderColor: 'primary.main',
                                             borderWidth: 2,
                                         },
                                     },
-                                    '& .MuiInputLabel-root.Mui-focused': { color: '#14B8A6' },
+                                    '& .MuiInputLabel-root.Mui-focused': { color: 'primary.main' },
                                 }}
                             />
 
@@ -247,14 +256,15 @@ const Signup = () => {
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: 2,
-                                        '& fieldset': { borderColor: '#E2E8F0' },
-                                        '&:hover fieldset': { borderColor: '#CBD5E1' },
+                                        backgroundColor: 'background.paper',
+                                        '& fieldset': { borderColor: 'divider' },
+                                        '&:hover fieldset': { borderColor: 'text.secondary' },
                                         '&.Mui-focused fieldset': {
-                                            borderColor: '#14B8A6',
+                                            borderColor: 'primary.main',
                                             borderWidth: 2,
                                         },
                                     },
-                                    '& .MuiInputLabel-root.Mui-focused': { color: '#14B8A6' },
+                                    '& .MuiInputLabel-root.Mui-focused': { color: 'primary.main' },
                                 }}
                             />
 
@@ -288,6 +298,7 @@ const Signup = () => {
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: 2,
+                                            backgroundColor: '#F8FAFC',
                                             '& fieldset': { borderColor: '#E2E8F0' },
                                             '&:hover fieldset': { borderColor: '#CBD5E1' },
                                             '&.Mui-focused fieldset': {
@@ -346,7 +357,7 @@ const Signup = () => {
                     </form>
 
                     <Box sx={{ mt: 4, textAlign: 'center' }}>
-                        <Typography variant="body2" sx={{ color: '#64748B' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                             Already have an account?{' '}
                             <Link
                                 to="/login"
@@ -369,7 +380,7 @@ const Signup = () => {
                 xs={12}
                 md={6}
                 sx={{
-                    bgcolor: '#F3F4F6',
+                    bgcolor: 'background.paper',
                     display: { xs: 'none', md: 'flex' },
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -384,7 +395,7 @@ const Signup = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        background: '#FFFFFF',
+                        background: 'background.paper',
                     }}
                 >
                     <motion.div

@@ -32,6 +32,16 @@ export const uploadReceipt = async (req, res) => {
     try {
         const { transactionId } = req.body;
 
+        // Check if Cloudinary is configured
+        if (!process.env.CLOUDINARY_CLOUD_NAME ||
+            !process.env.CLOUDINARY_API_KEY ||
+            !process.env.CLOUDINARY_API_SECRET) {
+            console.error('Cloudinary config missing');
+            return res.status(500).json({
+                message: 'Image upload disabled: Missing Cloudinary configuration'
+            });
+        }
+
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ message: 'Please upload at least one file' });
         }

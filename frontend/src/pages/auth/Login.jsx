@@ -22,7 +22,10 @@ import {
     VisibilityOff,
     Google,
     ArrowBack,
+    Brightness4,
+    Brightness7,
 } from '@mui/icons-material';
+import { useThemeMode } from '../../theme/ThemeProvider';
 import { motion } from 'framer-motion';
 import LoginAnimation from '../../components/auth/LoginAnimation';
 import { useAuth } from '../../context/AuthContext';
@@ -30,6 +33,7 @@ import PageLoader from '../../components/common/PageLoader';
 
 const Login = () => {
     const navigate = useNavigate();
+    const { mode, toggleTheme } = useThemeMode();
     const { login } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -71,7 +75,7 @@ const Login = () => {
     };
 
     return (
-        <Grid container sx={{ minHeight: '100vh', bgcolor: '#FFFFFF' }}>
+        <Grid container sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             {loading && <PageLoader message="Signing In..." />}
             {/* Left Side - Form */}
             <Grid
@@ -91,19 +95,22 @@ const Login = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6 }}
                 >
-                    <Box sx={{ position: 'absolute', top: 32, left: 32 }}>
+                    <Box sx={{ position: 'absolute', top: 32, left: 32, display: 'flex', gap: 2, alignItems: 'center' }}>
                         <Button
                             startIcon={<ArrowBack />}
                             onClick={() => navigate('/')}
                             sx={{
-                                color: '#64748B',
+                                color: 'text.secondary',
                                 textTransform: 'none',
                                 fontWeight: 600,
-                                '&:hover': { color: '#111827', bgcolor: 'transparent' },
+                                '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
                             }}
                         >
                             Back
                         </Button>
+                        <IconButton onClick={toggleTheme} sx={{ color: 'text.primary' }}>
+                            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                        </IconButton>
                     </Box>
 
                     <Box sx={{ mb: 6 }}>
@@ -111,7 +118,7 @@ const Login = () => {
                             variant="h3"
                             sx={{
                                 fontWeight: 800,
-                                color: '#111827',
+                                color: 'text.primary',
                                 mb: 2,
                                 letterSpacing: '-0.02em',
                                 display: 'flex',
@@ -123,7 +130,7 @@ const Login = () => {
                             <br />
                             Welcome Back! 👋
                         </Typography>
-                        <Typography variant="body1" sx={{ color: '#64748B', fontSize: '1.1rem' }}>
+                        <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.1rem' }}>
                             Hey, welcome back to your special place
                         </Typography>
                     </Box>
@@ -154,14 +161,15 @@ const Login = () => {
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: 2,
-                                        '& fieldset': { borderColor: '#E2E8F0' },
-                                        '&:hover fieldset': { borderColor: '#CBD5E1' },
+                                        backgroundColor: 'background.paper',
+                                        '& fieldset': { borderColor: 'divider' },
+                                        '&:hover fieldset': { borderColor: 'text.secondary' },
                                         '&.Mui-focused fieldset': {
-                                            borderColor: '#14B8A6',
+                                            borderColor: 'primary.main',
                                             borderWidth: 2,
                                         },
                                     },
-                                    '& .MuiInputLabel-root.Mui-focused': { color: '#14B8A6' },
+                                    '& .MuiInputLabel-root.Mui-focused': { color: 'primary.main' },
                                 }}
                             />
 
@@ -194,14 +202,15 @@ const Login = () => {
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: 2,
-                                        '& fieldset': { borderColor: '#E2E8F0' },
-                                        '&:hover fieldset': { borderColor: '#CBD5E1' },
+                                        backgroundColor: 'background.paper',
+                                        '& fieldset': { borderColor: 'divider' },
+                                        '&:hover fieldset': { borderColor: 'text.secondary' },
                                         '&.Mui-focused fieldset': {
-                                            borderColor: '#14B8A6',
+                                            borderColor: 'primary.main',
                                             borderWidth: 2,
                                         },
                                     },
-                                    '& .MuiInputLabel-root.Mui-focused': { color: '#14B8A6' },
+                                    '& .MuiInputLabel-root.Mui-focused': { color: 'primary.main' },
                                 }}
                             />
 
@@ -225,7 +234,7 @@ const Login = () => {
                                         />
                                     }
                                     label={
-                                        <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
                                             Remember me
                                         </Typography>
                                     }
@@ -233,7 +242,7 @@ const Login = () => {
                                 <Link
                                     to="/forgot-password"
                                     style={{
-                                        color: '#64748B',
+                                        color: 'text.secondary',
                                         textDecoration: 'none',
                                         fontSize: '0.875rem',
                                         fontWeight: 600,
@@ -292,7 +301,7 @@ const Login = () => {
                     </form>
 
                     <Box sx={{ mt: 4, textAlign: 'center' }}>
-                        <Typography variant="body2" sx={{ color: '#64748B' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                             Don't have an account?{' '}
                             <Link
                                 to="/signup"
@@ -315,7 +324,7 @@ const Login = () => {
                 xs={12}
                 md={6}
                 sx={{
-                    bgcolor: '#F3F4F6',
+                    bgcolor: 'background.paper',
                     display: { xs: 'none', md: 'flex' },
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -330,7 +339,7 @@ const Login = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        background: '#FFFFFF',
+                        background: 'background.paper',
                     }}
                 >
                     <motion.div

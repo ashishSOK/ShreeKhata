@@ -25,6 +25,7 @@ import {
     useMediaQuery,
     useTheme,
     Alert,
+    Tooltip,
 } from '@mui/material';
 import {
     Add,
@@ -188,17 +189,34 @@ const Ledger = () => {
             } else {
                 const response = await transactionAPI.create(formData);
                 transactionId = response.data._id;
-                setSuccess('Transaction added successfully');
+                // Don't set success yet if we have images
+                if (images.length === 0) {
+                    setSuccess('Transaction added successfully');
+                }
             }
 
             // Upload receipts if any
             if (images.length > 0) {
-                const formDataUpload = new FormData();
-                formDataUpload.append('transactionId', transactionId);
-                images.forEach((image) => {
-                    formDataUpload.append('images', image);
-                });
-                await receiptAPI.upload(formDataUpload);
+                try {
+                    const formDataUpload = new FormData();
+                    formDataUpload.append('transactionId', transactionId);
+                    images.forEach((image) => {
+                        formDataUpload.append('receipts', image); // Changed 'images' to 'receipts' to match backend
+                    });
+
+                    const uploadResponse = await receiptAPI.upload(formDataUpload);
+
+                    if (editMode) {
+                        setSuccess('Transaction and receipts updated successfully');
+                    } else {
+                        setSuccess('Transaction and receipts added successfully');
+                    }
+                } catch (uploadError) {
+                    console.error('Error uploading receipts:', uploadError);
+                    // Transaction was saved, but receipts failed
+                    setSuccess('Transaction saved, but failed to upload receipts. Please try adding them later.');
+                    // Don't set main error, as transaction was saved
+                }
             }
 
             handleCloseDialog();
@@ -239,7 +257,64 @@ const Ledger = () => {
     return (
         <Box>
             {loading && <PageLoader message="Loading Ledger..." />}
-            {/* ... Header & Messages ... */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography
+                    variant="h4"
+                    sx={{
+                        fontWeight: 700,
+                        fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' }
+                    }}
+                >
+                    Ledger
+                </Typography>
+                {!isMobile && (
+                    <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={() => handleOpenDialog()}
+                        sx={{
+                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                            px: 3,
+                            py: 1,
+                            borderRadius: 2,
+                            boxShadow: '0 4px 14px 0 rgba(99, 102, 241, 0.39)',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                                boxShadow: '0 6px 20px 0 rgba(99, 102, 241, 0.5)',
+                            }
+                        }}
+                    >
+                        Add Transaction
+                    </Button>
+                )}
+            </Box>
+
+            <AnimatePresence>
+                {success && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                        exit={{ opacity: 0, y: -20, height: 0 }}
+                    >
+                        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+                            {success}
+                        </Alert>
+                    </motion.div>
+                )}
+                {error && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                        exit={{ opacity: 0, y: -20, height: 0 }}
+                    >
+                        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+                            {error}
+                        </Alert>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Search Bar */}
             <motion.div
@@ -300,6 +375,7 @@ const Ledger = () => {
                                     <TableCell><strong>Type</strong></TableCell>
                                     <TableCell><strong>Category</strong></TableCell>
                                     <TableCell><strong>Vendor</strong></TableCell>
+                                    <TableCell><strong>Notes</strong></TableCell>
                                     <TableCell align="right"><strong>Amount</strong></TableCell>
                                     <TableCell><strong>Payment</strong></TableCell>
                                     <TableCell align="right"><strong>Actions</strong></TableCell>
@@ -340,6 +416,15 @@ const Ledger = () => {
                                             </TableCell>
                                             <TableCell>{transaction.category}</TableCell>
                                             <TableCell>{transaction.vendor || '-'}</TableCell>
+                                            <TableCell>
+                                                {transaction.notes ? (
+                                                    <Tooltip title={transaction.notes}>
+                                                        <Typography variant="body2" sx={{ maxWidth: 150, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                            {transaction.notes}
+                                                        </Typography>
+                                                    </Tooltip>
+                                                ) : '-'}
+                                            </TableCell>
                                             <TableCell align="right" sx={{ fontWeight: 700 }}>
                                                 {formatCurrency(transaction.amount)}
                                             </TableCell>

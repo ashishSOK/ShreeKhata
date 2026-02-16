@@ -12,6 +12,7 @@ import {
     Stack,
     Card,
     CardContent,
+    IconButton,
 } from '@mui/material';
 import {
     ArrowForward,
@@ -23,7 +24,11 @@ import {
     Analytics,
     CheckCircle,
     Star,
+    Brightness4,
+    Brightness7,
 } from '@mui/icons-material';
+import { useThemeMode } from '../theme/ThemeProvider';
+import { useTheme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import { keyframes } from '@mui/system';
 
@@ -35,6 +40,8 @@ const float = keyframes`
 
 const Welcome = () => {
     const navigate = useNavigate();
+    const { mode, toggleTheme } = useThemeMode();
+    const theme = useTheme();
 
     // Mouse tracking for 3D parallax effect
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -137,15 +144,16 @@ const Welcome = () => {
     ];
 
     return (
-        <Box sx={{ bgcolor: '#FFFFFF', minHeight: '100vh' }}>
+        <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', overflowX: 'hidden' }}>
             {/* Header */}
             <AppBar
                 position="sticky"
                 elevation={0}
                 sx={{
-                    bgcolor: 'rgba(255, 255, 255, 0.98)',
+                    bgcolor: mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.98)',
                     backdropFilter: 'blur(10px)',
-                    borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+                    borderBottom: 1,
+                    borderColor: 'divider',
                 }}
             >
                 <Container maxWidth="xl">
@@ -171,7 +179,7 @@ const Welcome = () => {
                                     variant="h6"
                                     sx={{
                                         fontWeight: 800,
-                                        color: '#111827',
+                                        color: 'text.primary',
                                         fontSize: '1.4rem',
                                         letterSpacing: '-0.02em',
                                     }}
@@ -192,11 +200,11 @@ const Welcome = () => {
                                         sx={{
                                             px: 2.5,
                                             py: 1,
-                                            color: '#6B7280',
+                                            color: 'text.secondary',
                                             fontWeight: 600,
                                             textTransform: 'none',
                                             fontSize: '0.95rem',
-                                            '&:hover': { bgcolor: 'transparent', color: '#111827' },
+                                            '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
                                         }}
                                     >
                                         Use Cases
@@ -206,11 +214,11 @@ const Welcome = () => {
                                         sx={{
                                             px: 2.5,
                                             py: 1,
-                                            color: '#6B7280',
+                                            color: 'text.secondary',
                                             fontWeight: 600,
                                             textTransform: 'none',
                                             fontSize: '0.95rem',
-                                            '&:hover': { bgcolor: 'transparent', color: '#111827' },
+                                            '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
                                         }}
                                     >
                                         Features
@@ -220,11 +228,11 @@ const Welcome = () => {
                                         sx={{
                                             px: 2.5,
                                             py: 1,
-                                            color: '#6B7280',
+                                            color: 'text.secondary',
                                             fontWeight: 600,
                                             textTransform: 'none',
                                             fontSize: '0.95rem',
-                                            '&:hover': { bgcolor: 'transparent', color: '#111827' },
+                                            '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
                                         }}
                                     >
                                         How it works
@@ -234,27 +242,33 @@ const Welcome = () => {
                                         sx={{
                                             px: 2.5,
                                             py: 1,
-                                            color: '#6B7280',
+                                            color: 'text.secondary',
                                             fontWeight: 600,
                                             textTransform: 'none',
                                             fontSize: '0.95rem',
-                                            '&:hover': { bgcolor: 'transparent', color: '#111827' },
+                                            '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
                                         }}
                                     >
                                         Testimonials
                                     </Button>
                                 </Box>
+
+                                {/* Theme Toggle */}
+                                <IconButton onClick={toggleTheme} sx={{ color: 'text.primary', ml: 1 }}>
+                                    {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                                </IconButton>
+
                                 <Button
                                     onClick={() => navigate('/login')}
                                     sx={{
                                         px: { xs: 2, md: 3 },
                                         py: 1,
-                                        ml: { xs: 0, md: 2 },
-                                        color: '#111827',
+                                        ml: { xs: 0, md: 1 },
+                                        color: 'text.primary',
                                         fontWeight: 600,
                                         textTransform: 'none',
                                         fontSize: '0.95rem',
-                                        '&:hover': { bgcolor: '#F9FAFB' },
+                                        '&:hover': { bgcolor: 'action.hover' },
                                     }}
                                 >
                                     Login
@@ -265,7 +279,8 @@ const Welcome = () => {
                                     sx={{
                                         px: { xs: 2, md: 3 },
                                         py: 1.25,
-                                        bgcolor: '#14B8A6',
+                                        ml: 1,
+                                        bgcolor: 'primary.main',
                                         color: 'white',
                                         fontWeight: 700,
                                         textTransform: 'none',
@@ -273,7 +288,7 @@ const Welcome = () => {
                                         borderRadius: 1.5,
                                         boxShadow: 'none',
                                         '&:hover': {
-                                            bgcolor: '#0D9488',
+                                            bgcolor: 'primary.dark',
                                             boxShadow: 'none',
                                         },
                                     }}
@@ -316,7 +331,7 @@ const Welcome = () => {
                                         sx={{
                                             fontSize: { xs: '2.75rem', md: '4rem' },
                                             fontWeight: 500,
-                                            color: '#374151',
+                                            color: 'text.primary',
                                             mb: 3.5,
                                             lineHeight: 1.2,
                                             letterSpacing: '-0.03em',
@@ -331,7 +346,7 @@ const Welcome = () => {
                                     <Typography
                                         variant="body1"
                                         sx={{
-                                            color: '#6B7280',
+                                            color: 'text.secondary',
                                             mb: 4.5,
                                             fontSize: '1.05rem',
                                             lineHeight: 1.7,
@@ -368,15 +383,16 @@ const Welcome = () => {
                                             sx={{
                                                 px: 4,
                                                 py: 1.75,
-                                                color: '#374151',
+                                                color: 'text.primary',
                                                 fontWeight: 600,
                                                 textTransform: 'none',
                                                 fontSize: '1rem',
                                                 borderRadius: 1.5,
-                                                border: '1.5px solid #E5E7EB',
+                                                border: '1.5px solid',
+                                                borderColor: 'divider',
                                                 '&:hover': {
-                                                    bgcolor: '#F9FAFB',
-                                                    borderColor: '#D1D5DB',
+                                                    bgcolor: 'action.hover',
+                                                    borderColor: 'text.secondary',
                                                 },
                                             }}
                                         >
@@ -507,7 +523,9 @@ const Welcome = () => {
                                                     width: '100%',
                                                     height: 50,
                                                     bottom: 0,
-                                                    background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+                                                    background: mode === 'dark'
+                                                        ? 'linear-gradient(135deg, #374151 0%, #1F2937 100%)'
+                                                        : 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
                                                     clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
                                                     boxShadow: '0 8px 16px rgba(0,0,0,0.08)',
                                                 }}
@@ -558,10 +576,13 @@ const Welcome = () => {
                                                     width: '100%',
                                                     height: 65,
                                                     bottom: 0,
-                                                    background: 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
+                                                    background: mode === 'dark'
+                                                        ? 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)'
+                                                        : 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
                                                     clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
                                                     boxShadow: '0 12px 30px rgba(20, 184, 166, 0.15)',
-                                                    border: '2px solid #E2E8F0',
+                                                    border: '2px solid',
+                                                    borderColor: 'divider',
                                                     padding: '18px 12px 8px',
                                                     display: 'flex',
                                                     alignItems: 'flex-end',
