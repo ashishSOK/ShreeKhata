@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     Box,
     Typography,
@@ -14,13 +14,140 @@ import {
     TextField,
     Alert,
     Stack,
+    Skeleton,
+    useTheme,
 } from '@mui/material';
 import { Add, Edit, Delete, Circle } from '@mui/icons-material';
 import { categoryAPI } from '../services/api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import PageLoader from '../components/common/PageLoader';
+
+const CategoryCard = ({ category, index, onEdit, onDelete, isDefault }) => (
+    <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.05, duration: 0.3 }}
+        style={{ height: '100%' }}
+    >
+        <Card
+            sx={{
+                p: 2.5,
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                background: `linear-gradient(135deg, ${category.color}15 0%, ${category.color}05 100%)`,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${category.color}30`,
+                borderRadius: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: `0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px ${category.color}15`,
+                '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: `radial-gradient(circle at top left, ${category.color}20, transparent 60%)`,
+                    pointerEvents: 'none',
+                },
+                '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: `0 12px 24px rgba(0, 0, 0, 0.2), 0 4px 8px ${category.color}30`,
+                    border: `1px solid ${category.color}50`,
+                },
+            }}
+        >
+            <motion.div
+                whileHover={{ rotate: 10, scale: 1.1 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+            >
+                <Circle
+                    sx={{
+                        color: category.color,
+                        fontSize: 36,
+                        filter: `drop-shadow(0 4px 8px ${category.color}40)`,
+                    }}
+                />
+            </motion.div>
+
+            <Box sx={{ flex: 1, position: 'relative', zIndex: 1, minWidth: 0 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, noWrap: true }}>
+                    {category.name}
+                </Typography>
+                {isDefault && (
+                    <Chip
+                        label="Default"
+                        size="small"
+                        sx={{
+                            bgcolor: `${category.color}20`,
+                            color: category.color,
+                            fontWeight: 600,
+                            border: `1px solid ${category.color}40`,
+                            height: 20,
+                            fontSize: '0.7rem'
+                        }}
+                    />
+                )}
+            </Box>
+
+            {!isDefault && (
+                <Box sx={{ display: 'flex', gap: 0.5, position: 'relative', zIndex: 1 }}>
+                    <IconButton
+                        size="small"
+                        onClick={() => onEdit(category)}
+                        sx={{
+                            color: category.color,
+                            opacity: 0.8,
+                            '&:hover': { opacity: 1, bgcolor: `${category.color}15` },
+                        }}
+                    >
+                        <Edit fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                        size="small"
+                        onClick={() => onDelete(category._id)}
+                        sx={{
+                            color: '#ef4444',
+                            opacity: 0.8,
+                            '&:hover': { opacity: 1, bgcolor: 'rgba(239, 68, 68, 0.1)' },
+                        }}
+                    >
+                        <Delete fontSize="small" />
+                    </IconButton>
+                </Box>
+            )}
+        </Card>
+    </motion.div>
+);
+
+const CategorySkeleton = () => (
+    <Card
+        sx={{
+            p: 2.5,
+            height: '100%',
+            borderRadius: 3,
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+        }}
+    >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Skeleton variant="circular" width={36} height={36} />
+            <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="60%" height={24} />
+                <Skeleton variant="text" width="30%" height={16} />
+            </Box>
+        </Box>
+    </Card>
+);
 
 const Categories = () => {
+    const theme = useTheme();
     const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentCategory, setCurrentCategory] = useState(null);
@@ -39,10 +166,17 @@ const Categories = () => {
 
     const loadCategories = async () => {
         try {
-            const response = await categoryAPI.getAll();
+            setLoading(true);
+            // Promise.all ensures we wait for API but also respect min loading time
+            const [response] = await Promise.all([
+                categoryAPI.getAll()
+            ]);
             setCategories(response.data);
         } catch (error) {
             console.error('Error loading categories:', error);
+            setError('Failed to load categories');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -74,7 +208,7 @@ const Categories = () => {
                 await categoryAPI.create(formData);
                 setSuccess('Category created successfully!');
             }
-            await loadCategories();
+            loadCategories();
             handleCloseDialog();
             setTimeout(() => setSuccess(''), 3000);
         } catch (error) {
@@ -88,18 +222,19 @@ const Categories = () => {
         try {
             await categoryAPI.delete(id);
             setSuccess('Category deleted successfully!');
-            await loadCategories();
+            loadCategories();
             setTimeout(() => setSuccess(''), 3000);
         } catch (error) {
             setError('Error deleting category');
         }
     };
 
-    const defaultCategories = categories.filter((c) => c.isDefault);
-    const customCategories = categories.filter((c) => !c.isDefault);
+    const defaultCategories = useMemo(() => categories.filter((c) => c.isDefault), [categories]);
+    const customCategories = useMemo(() => categories.filter((c) => !c.isDefault), [categories]);
 
     return (
         <Box>
+            {loading && <PageLoader message="Loading Categories..." />}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     Categories
@@ -133,231 +268,125 @@ const Categories = () => {
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
             {/* Default Categories */}
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                Default Categories
-            </Typography>
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                {defaultCategories.map((category, index) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={category._id}>
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1, duration: 0.5 }}
-                            style={{ height: '100%' }}
-                        >
-                            <Card
-                                sx={{
-                                    p: 2.5,
-                                    height: '100%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 2,
-                                    background: `linear-gradient(135deg, ${category.color}15 0%, ${category.color}05 100%)`,
-                                    backdropFilter: 'blur(10px)',
-                                    border: `1px solid ${category.color}30`,
-                                    borderRadius: 3,
-                                    position: 'relative',
-                                    overflow: 'hidden',
-                                    transformStyle: 'preserve-3d',
-                                    transform: 'perspective(1000px) rotateX(3deg) rotateY(3deg) translateZ(10px)',
-                                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    boxShadow: `0 8px 24px rgba(0, 0, 0, 0.25), 0 2px 8px ${category.color}25`,
-                                    '&::before': {
-                                        content: '""',
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        right: 0,
-                                        bottom: 0,
-                                        background: `radial-gradient(circle at top left, ${category.color}20, transparent 60%)`,
-                                        pointerEvents: 'none',
-                                    },
-                                    '&:hover': {
-                                        transform: 'perspective(1000px) rotateX(-5deg) rotateY(-5deg) translateZ(25px) scale(1.03)',
-                                        boxShadow: `0 16px 40px rgba(0, 0, 0, 0.35), 0 8px 20px ${category.color}45`,
-                                        border: `1px solid ${category.color}50`,
-                                    },
-                                }}
-                            >
-                                <motion.div
-                                    whileHover={{ scale: 1.15, rotate: 10 }}
-                                    transition={{ type: 'spring', stiffness: 300 }}
-                                >
-                                    <Circle
-                                        sx={{
-                                            color: category.color,
-                                            fontSize: 36,
-                                            filter: `drop-shadow(0 4px 12px ${category.color}60)`,
-                                        }}
-                                    />
-                                </motion.div>
-                                <Box sx={{ flex: 1, position: 'relative', zIndex: 1 }}>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                        {category.name}
-                                    </Typography>
-                                    <Chip
-                                        label="Default"
-                                        size="small"
-                                        sx={{
-                                            bgcolor: `${category.color}20`,
-                                            color: category.color,
-                                            fontWeight: 600,
-                                            border: `1px solid ${category.color}40`,
-                                        }}
-                                    />
-                                </Box>
-                            </Card>
-                        </motion.div>
-                    </Grid>
-                ))}
-            </Grid>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+            >
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                    Default Categories
+                </Typography>
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                    {loading ? (
+                        Array.from(new Array(4)).map((_, index) => (
+                            <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+                                <CategorySkeleton />
+                            </Grid>
+                        ))
+                    ) : (
+                        defaultCategories.map((category, index) => (
+                            <Grid item xs={12} sm={6} md={4} lg={3} key={category._id}>
+                                <CategoryCard
+                                    category={category}
+                                    index={index}
+                                    isDefault={true}
+                                />
+                            </Grid>
+                        ))
+                    )}
+                </Grid>
+            </motion.div>
 
             {/* Custom Categories */}
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                Custom Categories
-            </Typography>
-            <Grid container spacing={3}>
-                {customCategories.length === 0 ? (
-                    <Grid item xs={12}>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <Card
-                                sx={{
-                                    p: 6,
-                                    textAlign: 'center',
-                                    background: 'rgba(255, 255, 255, 0.03)',
-                                    backdropFilter: 'blur(20px)',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    borderRadius: 3,
-                                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                                }}
-                            >
-                                <motion.div
-                                    animate={{
-                                        y: [0, -10, 0],
-                                    }}
-                                    transition={{
-                                        duration: 2,
-                                        repeat: Infinity,
-                                        ease: 'easeInOut'
-                                    }}
-                                >
-                                    <Add sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                                </motion.div>
-                                <Typography color="text.secondary" variant="h6" sx={{ fontWeight: 500 }}>
-                                    No custom categories yet. Create your first category!
-                                </Typography>
-                            </Card>
-                        </motion.div>
-                    </Grid>
-                ) : (
-                    customCategories.map((category, index) => (
-                        <Grid item xs={12} sm={6} md={4} lg={3} key={category._id}>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+            >
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                    Custom Categories
+                </Typography>
+                <Grid container spacing={3}>
+                    {loading ? (
+                        Array.from(new Array(4)).map((_, index) => (
+                            <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+                                <CategorySkeleton />
+                            </Grid>
+                        ))
+                    ) : customCategories.length === 0 ? (
+                        <Grid item xs={12}>
                             <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: (defaultCategories.length + index) * 0.1, duration: 0.5 }}
-                                style={{ height: '100%' }}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.5 }}
                             >
                                 <Card
                                     sx={{
-                                        p: 2.5,
-                                        height: '100%',
-                                        background: `linear-gradient(135deg, ${category.color}15 0%, ${category.color}05 100%)`,
-                                        backdropFilter: 'blur(10px)',
-                                        border: `1px solid ${category.color}30`,
+                                        p: 6,
+                                        textAlign: 'center',
+                                        background: 'rgba(255, 255, 255, 0.03)',
+                                        backdropFilter: 'blur(20px)',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
                                         borderRadius: 3,
-                                        position: 'relative',
-                                        overflow: 'hidden',
-                                        transformStyle: 'preserve-3d',
-                                        transform: 'perspective(1000px) rotateX(3deg) rotateY(3deg) translateZ(10px)',
-                                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                                        boxShadow: `0 8px 24px rgba(0, 0, 0, 0.25), 0 2px 8px ${category.color}25`,
-                                        '&::before': {
-                                            content: '""',
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            right: 0,
-                                            bottom: 0,
-                                            background: `radial-gradient(circle at top left, ${category.color}20, transparent 60%)`,
-                                            pointerEvents: 'none',
-                                        },
-                                        '&:hover': {
-                                            transform: 'perspective(1000px) rotateX(-5deg) rotateY(-5deg) translateZ(25px) scale(1.03)',
-                                            boxShadow: `0 16px 40px rgba(0, 0, 0, 0.35), 0 8px 20px ${category.color}45`,
-                                            border: `1px solid ${category.color}50`,
-                                        },
+                                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                                     }}
                                 >
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, position: 'relative', zIndex: 1 }}>
-                                        <motion.div
-                                            whileHover={{ scale: 1.15, rotate: 10 }}
-                                            transition={{ type: 'spring', stiffness: 300 }}
-                                        >
-                                            <Circle
-                                                sx={{
-                                                    color: category.color,
-                                                    fontSize: 36,
-                                                    filter: `drop-shadow(0 4px 12px ${category.color}60)`,
-                                                }}
-                                            />
-                                        </motion.div>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: 700, flex: 1 }}>
-                                            {category.name}
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', gap: 1, position: 'relative', zIndex: 1 }}>
-                                        <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.95 }}>
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleOpenDialog(category)}
-                                                sx={{
-                                                    bgcolor: `${category.color}20`,
-                                                    color: category.color,
-                                                    border: `1px solid ${category.color}30`,
-                                                    '&:hover': {
-                                                        bgcolor: `${category.color}30`,
-                                                    },
-                                                }}
-                                            >
-                                                <Edit fontSize="small" />
-                                            </IconButton>
-                                        </motion.div>
-                                        <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.95 }}>
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleDelete(category._id)}
-                                                sx={{
-                                                    bgcolor: 'rgba(239, 68, 68, 0.15)',
-                                                    color: '#ef4444',
-                                                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                                                    '&:hover': {
-                                                        bgcolor: 'rgba(239, 68, 68, 0.25)',
-                                                    },
-                                                }}
-                                            >
-                                                <Delete fontSize="small" />
-                                            </IconButton>
-                                        </motion.div>
-                                    </Box>
+                                    <motion.div
+                                        animate={{
+                                            y: [0, -10, 0],
+                                        }}
+                                        transition={{
+                                            duration: 2,
+                                            repeat: Infinity,
+                                            ease: 'easeInOut'
+                                        }}
+                                    >
+                                        <Add sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+                                    </motion.div>
+                                    <Typography color="text.secondary" variant="h6" sx={{ fontWeight: 500 }}>
+                                        No custom categories yet. Create your first category!
+                                    </Typography>
                                 </Card>
                             </motion.div>
                         </Grid>
-                    ))
-                )}
-            </Grid>
+                    ) : (
+                        customCategories.map((category, index) => (
+                            <Grid item xs={12} sm={6} md={4} lg={3} key={category._id}>
+                                <CategoryCard
+                                    category={category}
+                                    index={index}
+                                    isDefault={false}
+                                    onEdit={handleOpenDialog}
+                                    onDelete={handleDelete}
+                                // Reset index for custom categories so they stagger nicely from 0
+                                // or continue? Let's restart stagger for this section
+                                />
+                            </Grid>
+                        ))
+                    )}
+                </Grid>
+            </motion.div>
 
             {/* Add/Edit Dialog */}
-            <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="xs" fullWidth>
-                <DialogTitle>
+            <Dialog
+                open={openDialog}
+                onClose={handleCloseDialog}
+                maxWidth="xs"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        background: theme.palette.mode === 'dark'
+                            ? 'linear-gradient(135deg, #1f2937 0%, #111827 100%)'
+                            : 'white'
+                    }
+                }}
+            >
+                <DialogTitle sx={{ pb: 1 }}>
                     {editMode ? 'Edit Category' : 'Add New Category'}
                 </DialogTitle>
                 <DialogContent>
-                    <Stack spacing={3} sx={{ mt: 2 }}>
+                    <Stack spacing={3} sx={{ mt: 1 }}>
                         <TextField
                             fullWidth
                             label="Category Name"
@@ -367,44 +396,48 @@ const Categories = () => {
                         />
 
                         <Box>
-                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
                                 Select Color
                             </Typography>
-                            <Grid container spacing={1}>
+                            <Grid container spacing={1.5}>
                                 {colors.map((color) => (
                                     <Grid item key={color}>
-                                        <IconButton
-                                            onClick={() => setFormData({ ...formData, color })}
-                                            sx={{
-                                                width: 40,
-                                                height: 40,
-                                                bgcolor: color,
-                                                border: formData.color === color ? '3px solid' : 'none',
-                                                borderColor: 'white',
-                                                boxShadow: formData.color === color ? '0 0 0 2px ' + color : 'none',
-                                                '&:hover': {
+                                        <motion.div
+                                            whileHover={{ scale: 1.2 }}
+                                            whileTap={{ scale: 0.9 }}
+                                        >
+                                            <Box
+                                                onClick={() => setFormData({ ...formData, color })}
+                                                sx={{
+                                                    width: 36,
+                                                    height: 36,
+                                                    borderRadius: '50%',
                                                     bgcolor: color,
-                                                    opacity: 0.8,
-                                                },
-                                            }}
-                                        />
+                                                    cursor: 'pointer',
+                                                    border: formData.color === color ? '3px solid white' : '2px solid transparent',
+                                                    boxShadow: formData.color === color ? `0 0 0 2px ${color}` : 'none',
+                                                    transition: 'all 0.2s',
+                                                }}
+                                            />
+                                        </motion.div>
                                     </Grid>
                                 ))}
                             </Grid>
                         </Box>
                     </Stack>
                 </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
+                <DialogActions sx={{ p: 2.5 }}>
+                    <Button onClick={handleCloseDialog} color="inherit">Cancel</Button>
                     <Button
                         onClick={handleSubmit}
                         variant="contained"
                         disabled={!formData.name}
                         sx={{
                             background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                            px: 3
                         }}
                     >
-                        {editMode ? 'Update' : 'Add Category'}
+                        {editMode ? 'Update' : 'Add'}
                     </Button>
                 </DialogActions>
             </Dialog>

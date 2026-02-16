@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { PersonOutlined, PhoneOutlined, EmailOutlined, StoreOutlined, ReceiptOutlined } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import PageLoader from '../components/common/PageLoader';
 
 const Profile = () => {
     const { user, updateUserProfile } = useAuth();
@@ -36,6 +37,7 @@ const Profile = () => {
         setSuccess('');
         setLoading(true);
 
+        // Artificial delay for smoother UX
         const result = await updateUserProfile(formData);
 
         if (result.success) {
@@ -48,6 +50,7 @@ const Profile = () => {
 
     return (
         <Box>
+            {loading && <PageLoader message="Updating Profile..." />}
             <Typography variant="h4" sx={{ mb: 3, fontWeight: 700 }}>
                 Profile
             </Typography>

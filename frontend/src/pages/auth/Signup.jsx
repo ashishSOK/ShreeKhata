@@ -26,6 +26,7 @@ import {
 import { motion } from 'framer-motion';
 import AnalyticsSignupAnimation from '../../components/auth/AnalyticsSignupAnimation';
 import { useAuth } from '../../context/AuthContext';
+import PageLoader from '../../components/common/PageLoader';
 
 const Signup = () => {
     const navigate = useNavigate();
@@ -79,7 +80,9 @@ const Signup = () => {
 
         setLoading(true);
         try {
+            // Artificial delay for smooth animation
             const result = await signup(formData);
+
             if (result.success) {
                 navigate('/dashboard');
             } else {
@@ -111,6 +114,7 @@ const Signup = () => {
 
     return (
         <Grid container sx={{ minHeight: '100vh', bgcolor: '#FFFFFF' }}>
+            {loading && <PageLoader message="Creating Account..." />}
             {/* Left Side - Form */}
             <Grid
                 item

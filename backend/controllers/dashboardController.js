@@ -16,81 +16,134 @@ export const getSummary = async (req, res) => {
         const monthAgo = new Date(today);
         monthAgo.setMonth(monthAgo.getMonth() - 1);
 
-        // Today's summary
-        const todayTransactions = await Transaction.find({
-            user: req.user._id,
-            date: { $gte: today, $lt: tomorrow }
-        });
+        const userId = req.user._id;
 
-        let todayExpense = 0;
-        let todayCash = 0;
-        let todayOnline = 0;
-
-        todayTransactions.forEach((txn) => {
-            if (txn.type !== 'income' && txn.type !== 'credit_received') {
-                todayExpense += txn.amount;
-                if (txn.paymentMode === 'cash') {
-                    todayCash += txn.amount;
-                } else {
-                    todayOnline += txn.amount;
+        // Run all queries in parallel
+        const [todayStats, weekStats, monthStats] = await Promise.all([
+            // Today's stats
+            Transaction.aggregate([
+                {
+                    $match: {
+                        user: userId,
+                        date: { $gte: today, $lt: tomorrow },
+                        type: { $in: ['expense', 'purchase'] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        expense: { $sum: '$amount' },
+                        cash: {
+                            $sum: {
+                                $cond: [{ $eq: ['$paymentMode', 'cash'] }, '$amount', 0]
+                            }
+                        },
+                        online: {
+                            $sum: {
+                                $cond: [{ $ne: ['$paymentMode', 'cash'] }, '$amount', 0]
+                            }
+                        }
+                    }
                 }
-            }
-        });
+            ]),
 
-        // Weekly summary
-        const weekTransactions = await Transaction.find({
-            user: req.user._id,
-            date: { $gte: weekAgo, $lt: tomorrow }
-        });
-
-        let weekExpense = 0;
-        weekTransactions.forEach((txn) => {
-            if (txn.type !== 'income' && txn.type !== 'credit_received') {
-                weekExpense += txn.amount;
-            }
-        });
-
-        // Monthly summary
-        const monthTransactions = await Transaction.find({
-            user: req.user._id,
-            date: { $gte: monthAgo, $lt: tomorrow }
-        });
-
-        let monthExpense = 0;
-        let monthCash = 0;
-        let monthOnline = 0;
-        let monthIncome = 0;
-
-        monthTransactions.forEach((txn) => {
-            if (txn.type === 'income' || txn.type === 'credit_received') {
-                monthIncome += txn.amount;
-            } else {
-                monthExpense += txn.amount;
-                if (txn.paymentMode === 'cash') {
-                    monthCash += txn.amount;
-                } else {
-                    monthOnline += txn.amount;
+            // Weekly stats
+            Transaction.aggregate([
+                {
+                    $match: {
+                        user: userId,
+                        date: { $gte: weekAgo, $lt: tomorrow },
+                        type: { $in: ['expense', 'purchase'] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        expense: { $sum: '$amount' }
+                    }
                 }
-            }
-        });
+            ]),
+
+            // Monthly stats
+            Transaction.aggregate([
+                {
+                    $match: {
+                        user: userId,
+                        date: { $gte: monthAgo, $lt: tomorrow }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        expense: {
+                            $sum: {
+                                $cond: [
+                                    { $in: ['$type', ['expense', 'purchase']] },
+                                    '$amount',
+                                    0
+                                ]
+                            }
+                        },
+                        income: {
+                            $sum: {
+                                $cond: [
+                                    { $in: ['$type', ['income', 'credit_received']] },
+                                    '$amount',
+                                    0
+                                ]
+                            }
+                        },
+                        cash: {
+                            $sum: {
+                                $cond: [
+                                    {
+                                        $and: [
+                                            { $in: ['$type', ['expense', 'purchase']] },
+                                            { $eq: ['$paymentMode', 'cash'] }
+                                        ]
+                                    },
+                                    '$amount',
+                                    0
+                                ]
+                            }
+                        },
+                        online: {
+                            $sum: {
+                                $cond: [
+                                    {
+                                        $and: [
+                                            { $in: ['$type', ['expense', 'purchase']] },
+                                            { $ne: ['$paymentMode', 'cash'] }
+                                        ]
+                                    },
+                                    '$amount',
+                                    0
+                                ]
+                            }
+                        }
+                    }
+                }
+            ])
+        ]);
 
         res.json({
             today: {
-                expense: todayExpense,
-                cash: todayCash,
-                online: todayOnline
+                expense: todayStats[0]?.expense || 0,
+                cash: todayStats[0]?.cash || 0,
+                online: todayStats[0]?.online || 0
             },
             week: {
-                expense: weekExpense
+                expense: weekStats[0]?.expense || 0
             },
             month: {
-                expense: monthExpense,
-                income: monthIncome,
-                cash: monthCash,
-                online: monthOnline
+                expense: monthStats[0]?.expense || 0,
+                income: monthStats[0]?.income || 0,
+                cash: monthStats[0]?.cash || 0,
+                online: monthStats[0]?.online || 0
             }
         });
     } catch (error) {
+        console.error('Error in getSummary:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -98,38 +151,68 @@ export const getSummary = async (req, res) => {
 // @desc    Get spending trend (last 30 days)
 // @route   GET /api/dashboard/trend
 // @access  Private
+// @desc    Get spending trend (last 30 days)
+// @route   GET /api/dashboard/trend
+// @access  Private
 export const getSpendingTrend = async (req, res) => {
     try {
         const daysAgo = new Date();
         daysAgo.setDate(daysAgo.getDate() - 30);
+        daysAgo.setHours(0, 0, 0, 0);
 
-        const transactions = await Transaction.find({
-            user: req.user._id,
-            date: { $gte: daysAgo }
-        }).sort({ date: 1 });
-
-        // Group by date
-        const trendData = {};
-        transactions.forEach((txn) => {
-            const dateKey = txn.date.toISOString().split('T')[0];
-            if (!trendData[dateKey]) {
-                trendData[dateKey] = { date: dateKey, expense: 0, income: 0 };
+        const trend = await Transaction.aggregate([
+            {
+                $match: {
+                    user: req.user._id,
+                    date: { $gte: daysAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: '%Y-%m-%d', date: '$date' }
+                    },
+                    expense: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$type', ['expense', 'purchase']] },
+                                '$amount',
+                                0
+                            ]
+                        }
+                    },
+                    income: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$type', ['income', 'credit_received']] },
+                                '$amount',
+                                0
+                            ]
+                        }
+                    }
+                }
+            },
+            { $sort: { _id: 1 } },
+            {
+                $project: {
+                    date: '$_id',
+                    expense: 1,
+                    income: 1,
+                    _id: 0
+                }
             }
+        ]);
 
-            if (txn.type === 'income' || txn.type === 'credit_received') {
-                trendData[dateKey].income += txn.amount;
-            } else {
-                trendData[dateKey].expense += txn.amount;
-            }
-        });
-
-        const trend = Object.values(trendData);
         res.json(trend);
     } catch (error) {
+        console.error('Error in getSpendingTrend:', error);
         res.status(500).json({ message: error.message });
     }
 };
 
+// @desc    Get category distribution
+// @route   GET /api/dashboard/category-distribution
+// @access  Private
 // @desc    Get category distribution
 // @route   GET /api/dashboard/category-distribution
 // @access  Private
@@ -138,28 +221,32 @@ export const getCategoryDistribution = async (req, res) => {
         const monthAgo = new Date();
         monthAgo.setMonth(monthAgo.getMonth() - 1);
 
-        const transactions = await Transaction.find({
-            user: req.user._id,
-            date: { $gte: monthAgo },
-            type: { $in: ['expense', 'purchase'] }
-        });
-
-        // Group by category
-        const categoryData = {};
-        transactions.forEach((txn) => {
-            if (!categoryData[txn.category]) {
-                categoryData[txn.category] = 0;
+        const distribution = await Transaction.aggregate([
+            {
+                $match: {
+                    user: req.user._id,
+                    date: { $gte: monthAgo },
+                    type: { $in: ['expense', 'purchase'] }
+                }
+            },
+            {
+                $group: {
+                    _id: '$category',
+                    value: { $sum: '$amount' }
+                }
+            },
+            {
+                $project: {
+                    name: '$_id',
+                    value: 1,
+                    _id: 0
+                }
             }
-            categoryData[txn.category] += txn.amount;
-        });
-
-        const distribution = Object.entries(categoryData).map(([name, value]) => ({
-            name,
-            value
-        }));
+        ]);
 
         res.json(distribution);
     } catch (error) {
+        console.error('Error in getCategoryDistribution:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -167,35 +254,80 @@ export const getCategoryDistribution = async (req, res) => {
 // @desc    Get monthly comparison (last 6 months)
 // @route   GET /api/dashboard/monthly-comparison
 // @access  Private
+// @desc    Get monthly comparison (last 6 months)
+// @route   GET /api/dashboard/monthly-comparison
+// @access  Private
 export const getMonthlyComparison = async (req, res) => {
     try {
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        sixMonthsAgo.setDate(1); // Start from first day
+        sixMonthsAgo.setHours(0, 0, 0, 0);
 
-        const transactions = await Transaction.find({
-            user: req.user._id,
-            date: { $gte: sixMonthsAgo }
-        }).sort({ date: 1 });
-
-        // Group by month
-        const monthlyData = {};
-        transactions.forEach((txn) => {
-            const monthKey = `${txn.date.getFullYear()}-${String(txn.date.getMonth() + 1).padStart(2, '0')}`;
-
-            if (!monthlyData[monthKey]) {
-                monthlyData[monthKey] = { month: monthKey, expense: 0, income: 0 };
+        const comparison = await Transaction.aggregate([
+            {
+                $match: {
+                    user: req.user._id,
+                    date: { $gte: sixMonthsAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        month: { $month: '$date' },
+                        year: { $year: '$date' }
+                    },
+                    expense: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$type', ['expense', 'purchase']] },
+                                '$amount',
+                                0
+                            ]
+                        }
+                    },
+                    income: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$type', ['income', 'credit_received']] },
+                                '$amount',
+                                0
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                $sort: {
+                    '_id.year': 1,
+                    '_id.month': 1
+                }
+            },
+            {
+                $project: {
+                    month: {
+                        $concat: [
+                            { $toString: '$_id.year' },
+                            '-',
+                            {
+                                $cond: {
+                                    if: { $lt: ['$_id.month', 10] },
+                                    then: { $concat: ['0', { $toString: '$_id.month' }] },
+                                    else: { $toString: '$_id.month' }
+                                }
+                            }
+                        ]
+                    },
+                    expense: 1,
+                    income: 1,
+                    _id: 0
+                }
             }
+        ]);
 
-            if (txn.type === 'income' || txn.type === 'credit_received') {
-                monthlyData[monthKey].income += txn.amount;
-            } else {
-                monthlyData[monthKey].expense += txn.amount;
-            }
-        });
-
-        const comparison = Object.values(monthlyData);
         res.json(comparison);
     } catch (error) {
+        console.error('Error in getMonthlyComparison:', error);
         res.status(500).json({ message: error.message });
     }
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import {
     Box,
     Grid,
@@ -18,8 +18,9 @@ import { LineChart, Line, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianG
 import { dashboardAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
 import { motion } from 'framer-motion';
+import PageLoader from '../components/common/PageLoader';
 
-const StatCard = ({ title, value, icon, color, trend, delay = 0 }) => (
+const StatCard = memo(({ title, value, icon, color, trend, delay = 0 }) => (
     <motion.div
         initial={{ opacity: 0, y: 30, rotateX: -15 }}
         animate={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -119,6 +120,40 @@ const StatCard = ({ title, value, icon, color, trend, delay = 0 }) => (
             </CardContent>
         </Card>
     </motion.div>
+));
+
+const CardSkeleton = () => (
+    <Card
+        sx={{
+            height: '100%',
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: 3,
+            p: 3
+        }}
+    >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <Skeleton variant="rounded" width={50} height={50} sx={{ borderRadius: 2.5 }} />
+            <Skeleton variant="circular" width={24} height={24} />
+        </Box>
+        <Skeleton variant="text" width="60%" height={50} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width="40%" height={24} />
+    </Card>
+);
+
+const ChartSkeleton = ({ height = 300 }) => (
+    <Card
+        sx={{
+            height: '100%',
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: 3,
+            p: 3
+        }}
+    >
+        <Skeleton variant="text" width="40%" height={32} sx={{ mb: 3 }} />
+        <Skeleton variant="rectangular" width="100%" height={height} sx={{ borderRadius: 2 }} />
+    </Card>
 );
 
 const Dashboard = () => {
@@ -135,11 +170,12 @@ const Dashboard = () => {
 
     const loadDashboardData = async () => {
         try {
+            // Artificial delay to prevent flash if response is too fast
             const [summaryRes, trendRes, catDistRes, monthlyRes] = await Promise.all([
                 dashboardAPI.getSummary(),
                 dashboardAPI.getTrend(),
                 dashboardAPI.getCategoryDistribution(),
-                dashboardAPI.getMonthlyComparison(),
+                dashboardAPI.getMonthlyComparison()
             ]);
 
             setSummary(summaryRes.data);
@@ -156,15 +192,7 @@ const Dashboard = () => {
     const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6'];
 
     if (loading) {
-        return (
-            <Grid container spacing={3}>
-                {[1, 2, 3, 4].map((i) => (
-                    <Grid item xs={12} sm={6} lg={3} key={i}>
-                        <Skeleton variant="rectangular" height={150} sx={{ borderRadius: 2 }} />
-                    </Grid>
-                ))}
-            </Grid>
-        );
+        return <PageLoader message="Loading Dashboard..." />;
     }
 
     return (

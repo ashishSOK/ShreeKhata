@@ -96,47 +96,47 @@ const getDesignTokens = (mode) => ({
         h1: {
             fontFamily: '"Poppins", sans-serif',
             fontWeight: 800,
-            fontSize: '2.5rem',
+            fontSize: '2.2rem', // Reduced from 2.5rem
             lineHeight: 1.2,
             letterSpacing: '-0.02em',
         },
         h2: {
             fontFamily: '"Poppins", sans-serif',
             fontWeight: 700,
-            fontSize: '2rem',
+            fontSize: '1.8rem', // Reduced from 2rem
             lineHeight: 1.3,
             letterSpacing: '-0.01em',
         },
         h3: {
             fontFamily: '"Poppins", sans-serif',
             fontWeight: 700,
-            fontSize: '1.75rem',
+            fontSize: '1.5rem', // Reduced from 1.75rem
             lineHeight: 1.4,
         },
         h4: {
             fontFamily: '"Poppins", sans-serif',
             fontWeight: 600,
-            fontSize: '1.5rem',
+            fontSize: '1.25rem', // Reduced from 1.5rem
             lineHeight: 1.4,
         },
         h5: {
             fontFamily: '"Poppins", sans-serif',
             fontWeight: 600,
-            fontSize: '1.25rem',
+            fontSize: '1.1rem', // Reduced from 1.25rem
             lineHeight: 1.5,
         },
         h6: {
             fontFamily: '"Poppins", sans-serif',
             fontWeight: 600,
-            fontSize: '1rem',
+            fontSize: '0.95rem', // Reduced from 1rem
             lineHeight: 1.6,
         },
         body1: {
-            fontSize: '1rem',
+            fontSize: '0.95rem', // Reduced from 1rem
             lineHeight: 1.6,
         },
         body2: {
-            fontSize: '0.875rem',
+            fontSize: '0.85rem', // Reduced from 0.875rem
             lineHeight: 1.6,
         },
         button: {
@@ -151,9 +151,9 @@ const getDesignTokens = (mode) => ({
         MuiButton: {
             styleOverrides: {
                 root: {
-                    borderRadius: 10,
-                    padding: '10px 24px',
-                    fontSize: '0.95rem',
+                    borderRadius: 8, // Reduced from 10
+                    padding: '8px 20px', // Reduced from 10px 24px
+                    fontSize: '0.9rem', // Reduced from 0.95rem
                     fontWeight: 600,
                     boxShadow: 'none',
                     '&:hover': {
@@ -171,7 +171,7 @@ const getDesignTokens = (mode) => ({
         MuiCard: {
             styleOverrides: {
                 root: {
-                    borderRadius: 16,
+                    borderRadius: 12, // Reduced from 16
                     boxShadow: mode === 'dark'
                         ? '0 4px 20px rgba(0, 0, 0, 0.5)'
                         : '0 4px 20px rgba(0, 0, 0, 0.08)',
@@ -182,7 +182,7 @@ const getDesignTokens = (mode) => ({
         MuiPaper: {
             styleOverrides: {
                 root: {
-                    borderRadius: 16,
+                    borderRadius: 12, // Reduced from 16
                 },
                 elevation1: {
                     boxShadow: mode === 'dark'
@@ -195,7 +195,7 @@ const getDesignTokens = (mode) => ({
             styleOverrides: {
                 root: {
                     '& .MuiOutlinedInput-root': {
-                        borderRadius: 10,
+                        borderRadius: 8, // Reduced from 10
                     },
                 },
             },
@@ -203,8 +203,9 @@ const getDesignTokens = (mode) => ({
         MuiChip: {
             styleOverrides: {
                 root: {
-                    borderRadius: 8,
+                    borderRadius: 6, // Reduced from 8
                     fontWeight: 600,
+                    height: 28, // Reduced height for more compact look
                 },
             },
         },

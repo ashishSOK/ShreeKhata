@@ -3,13 +3,16 @@ import Category, { defaultCategories } from '../models/Category.js';
 // @desc    Get all categories
 // @route   GET /api/categories
 // @access  Private
+// @desc    Get all categories
+// @route   GET /api/categories
+// @access  Private
 export const getCategories = async (req, res) => {
     try {
-        // Get user's custom categories
-        const userCategories = await Category.find({ user: req.user._id });
-
-        // Get default categories
-        const defaults = await Category.find({ isDefault: true });
+        // Run queries in parallel
+        const [userCategories, defaults] = await Promise.all([
+            Category.find({ user: req.user._id }),
+            Category.find({ isDefault: true })
+        ]);
 
         // If no default categories exist, create them
         if (defaults.length === 0) {

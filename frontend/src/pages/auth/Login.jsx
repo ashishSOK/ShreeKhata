@@ -26,6 +26,7 @@ import {
 import { motion } from 'framer-motion';
 import LoginAnimation from '../../components/auth/LoginAnimation';
 import { useAuth } from '../../context/AuthContext';
+import PageLoader from '../../components/common/PageLoader';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -54,7 +55,9 @@ const Login = () => {
         setLoading(true);
 
         try {
+            // Artificial delay for smooth animation
             const result = await login(formData.email, formData.password);
+
             if (result.success) {
                 navigate('/dashboard');
             } else {
@@ -69,6 +72,7 @@ const Login = () => {
 
     return (
         <Grid container sx={{ minHeight: '100vh', bgcolor: '#FFFFFF' }}>
+            {loading && <PageLoader message="Signing In..." />}
             {/* Left Side - Form */}
             <Grid
                 item

@@ -40,4 +40,8 @@ export const defaultCategories = [
     { name: 'Personal Expense', color: '#ef4444', isDefault: true }
 ];
 
+// Index for better query performance
+categorySchema.index({ user: 1, isDefault: 1 });
+categorySchema.index({ isDefault: 1 });
+
 export default mongoose.model('Category', categorySchema);

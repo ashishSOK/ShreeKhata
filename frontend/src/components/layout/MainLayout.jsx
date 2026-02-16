@@ -262,17 +262,9 @@ const MainLayout = () => {
             >
                 <Toolbar />
                 <Box sx={{ p: { xs: 2, md: 3 }, pb: { xs: 10, md: 3 } }}>
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={location.pathname}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Outlet />
-                        </motion.div>
-                    </AnimatePresence>
+                    <Box sx={{ maxWidth: '1600px', mx: 'auto' }}>
+                        <Outlet />
+                    </Box>
                 </Box>
             </Box>
 

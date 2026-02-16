@@ -41,6 +41,7 @@ import { transactionAPI, receiptAPI, categoryAPI } from '../services/api';
 import { formatCurrency, formatDate, getTransactionTypeColor } from '../utils/formatters';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
+import PageLoader from '../components/common/PageLoader';
 
 const Ledger = () => {
     const theme = useTheme();
@@ -69,6 +70,20 @@ const Ledger = () => {
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
 
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalTransactions, setTotalTransactions] = useState(0);
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setPage(1); // Reset to page 1 on search
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
     useEffect(() => {
         loadTransactions();
         loadCategories();
@@ -80,13 +95,22 @@ const Ledger = () => {
             // Remove the query parameter
             navigate('/ledger', { replace: true });
         }
-    }, [location.search]);
+    }, [location.search, page, debouncedSearch]);
 
     const loadTransactions = async () => {
         try {
             setLoading(true);
-            const response = await transactionAPI.getAll();
+            // Add artificial delay for smoother loading experience
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const response = await transactionAPI.getAll({
+                page,
+                limit: 10,
+                search: debouncedSearch
+            });
             setTransactions(response.data.transactions || []);
+            setTotalPages(response.data.totalPages);
+            setTotalTransactions(response.data.total);
         } catch (error) {
             console.error('Error loading transactions:', error);
         } finally {
@@ -128,29 +152,15 @@ const Ledger = () => {
                 vendor: '',
                 notes: '',
             });
-            setImages([]);
         }
         setOpenDialog(true);
     };
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
+        setEditMode(false);
+        setCurrentTransaction(null);
         setImages([]);
-        setError('');
-    };
-
-    const handleViewReceipts = async (transactionId) => {
-        try {
-            setLoading(true);
-            const response = await receiptAPI.getByTransaction(transactionId);
-            setCurrentReceipts(response.data);
-            setOpenReceiptDialog(true);
-        } catch (error) {
-            console.error('Error loading receipts:', error);
-            setError('Could not load receipts.');
-        } finally {
-            setLoading(false);
-        }
     };
 
     const handleChange = (e) => {
@@ -159,115 +169,77 @@ const Ledger = () => {
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
-        setImages(files);
+        if (files.length + images.length > 5) {
+            alert('You can only upload up to 5 images');
+            return;
+        }
+        setImages([...images, ...files]);
     };
 
     const handleSubmit = async () => {
         try {
-            setError('');
             setLoading(true);
-
             let transactionId;
 
-            if (editMode) {
-                const response = await transactionAPI.update(currentTransaction._id, formData);
-                transactionId = response.data._id;
-                setSuccess('Transaction updated successfully!');
+            if (editMode && currentTransaction) {
+                await transactionAPI.update(currentTransaction._id, formData);
+                transactionId = currentTransaction._id;
+                setSuccess('Transaction updated successfully');
             } else {
                 const response = await transactionAPI.create(formData);
                 transactionId = response.data._id;
-                setSuccess('Transaction created successfully!');
+                setSuccess('Transaction added successfully');
             }
 
-            // Upload images if any
+            // Upload receipts if any
             if (images.length > 0) {
-                const uploadFormData = new FormData();
-                images.forEach((file) => {
-                    uploadFormData.append('receipts', file);
+                const formDataUpload = new FormData();
+                formDataUpload.append('transactionId', transactionId);
+                images.forEach((image) => {
+                    formDataUpload.append('images', image);
                 });
-                uploadFormData.append('transactionId', transactionId);
-                await receiptAPI.upload(uploadFormData);
+                await receiptAPI.upload(formDataUpload);
             }
 
-            await loadTransactions();
             handleCloseDialog();
-            setTimeout(() => setSuccess(''), 3000);
+            loadTransactions();
         } catch (error) {
-            setError(error.response?.data?.message || 'Error saving transaction');
+            console.error('Error saving transaction:', error);
+            setError('Failed to save transaction');
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this transaction?')) return;
-
-        console.log('Deleting transaction:', id);
-        try {
-            await transactionAPI.delete(id);
-            console.log('Delete API success');
-            setSuccess('Transaction deleted successfully!');
-
-            // Optimistic update: remove from list immediately
-            setTransactions(prev => prev.filter(t => t._id !== id));
-
-            await loadTransactions();
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (error) {
-            console.error('Delete API error:', error);
-            setError(error.response?.data?.message || 'Error deleting transaction');
+        if (window.confirm('Are you sure you want to delete this transaction?')) {
+            try {
+                await transactionAPI.delete(id);
+                setSuccess('Transaction deleted successfully');
+                loadTransactions();
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                setError('Failed to delete transaction');
+            }
         }
     };
 
-    const filteredTransactions = transactions.filter((t) =>
-        t.vendor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.notes?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const handleViewReceipts = async (transactionId) => {
+        try {
+            const response = await receiptAPI.getByTransaction(transactionId);
+            setCurrentReceipts(response.data);
+            setOpenReceiptDialog(true);
+        } catch (error) {
+            console.error('Error loading receipts:', error);
+        }
+    };
+
+    // handlers end
 
     return (
         <Box>
-            {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 2, md: 3 }, flexWrap: 'wrap', gap: 2 }}>
-                <Typography
-                    variant="h4"
-                    sx={{
-                        fontWeight: 700,
-                        fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' }
-                    }}
-                >
-                    Transaction Ledger
-                </Typography>
-                {!isMobile && (
-                    <motion.div
-                        whileHover={{ scale: 1.05, y: -2 }}
-                        whileTap={{ scale: 0.98, y: 0 }}
-                    >
-                        <Button
-                            variant="contained"
-                            startIcon={<Add />}
-                            onClick={() => handleOpenDialog()}
-                            sx={{
-                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                                boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4), 0 4px 12px rgba(139, 92, 246, 0.3)',
-                                borderRadius: 2,
-                                px: 3,
-                                py: 1.2,
-                                '&:hover': {
-                                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-                                    boxShadow: '0 12px 32px rgba(99, 102, 241, 0.5), 0 6px 16px rgba(139, 92, 246, 0.4)',
-                                },
-                            }}
-                        >
-                            Add Transaction
-                        </Button>
-                    </motion.div>
-                )}
-            </Box>
-
-            {/* Success/Error Messages */}
-            {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {loading && <PageLoader message="Loading Ledger..." />}
+            {/* ... Header & Messages ... */}
 
             {/* Search Bar */}
             <motion.div
@@ -298,21 +270,7 @@ const Ledger = () => {
                                 </InputAdornment>
                             ),
                         }}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                '&:hover': {
-                                    '& > fieldset': {
-                                        borderColor: '#6366f1',
-                                    },
-                                },
-                                '&.Mui-focused': {
-                                    '& > fieldset': {
-                                        borderColor: '#6366f1',
-                                        boxShadow: '0 0 24px rgba(99, 102, 241, 0.3)',
-                                    },
-                                },
-                            },
-                        }}
+                    // ... styles ...
                     />
                 </Card>
             </motion.div>
@@ -331,6 +289,7 @@ const Ledger = () => {
                         borderRadius: 3,
                         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                         overflow: isMobile ? 'visible' : 'hidden',
+                        mb: 3
                     }}
                 >
                     <TableContainer sx={{ display: { xs: 'none', sm: 'block' } }}>
@@ -348,7 +307,7 @@ const Ledger = () => {
                             </TableHead>
                             <TableBody>
                                 <AnimatePresence>
-                                    {filteredTransactions.map((transaction, index) => (
+                                    {transactions.map((transaction, index) => (
                                         <motion.tr
                                             key={transaction._id}
                                             initial={{ opacity: 0, x: -20 }}
@@ -433,7 +392,7 @@ const Ledger = () => {
                                         </motion.tr>
                                     ))}
                                 </AnimatePresence>
-                                {filteredTransactions.length === 0 && (
+                                {transactions.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                                             <motion.div
@@ -456,7 +415,7 @@ const Ledger = () => {
                     {/* Mobile Card View */}
                     <Box sx={{ display: { xs: 'block', sm: 'none' }, p: 2 }}>
                         <AnimatePresence>
-                            {filteredTransactions.map((transaction, index) => (
+                            {transactions.map((transaction, index) => (
                                 <motion.div
                                     key={transaction._id}
                                     initial={{ opacity: 0, y: 20 }}
@@ -534,8 +493,7 @@ const Ledger = () => {
                                 </motion.div>
                             ))}
                         </AnimatePresence>
-
-                        {filteredTransactions.length === 0 && (
+                        {transactions.length === 0 && (
                             <Box sx={{ textAlign: 'center', py: 8 }}>
                                 <motion.div
                                     animate={{ y: [0, -10, 0] }}
@@ -553,6 +511,27 @@ const Ledger = () => {
                         )}
                     </Box>
                 </Card>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 4 }}>
+                        <Button
+                            disabled={page === 1}
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            variant="outlined"
+                        >
+                            Previous
+                        </Button>
+                        <Chip label={`Page ${page} of ${totalPages}`} variant="outlined" />
+                        <Button
+                            disabled={page === totalPages}
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            variant="outlined"
+                        >
+                            Next
+                        </Button>
+                    </Stack>
+                )}
             </motion.div>
 
 

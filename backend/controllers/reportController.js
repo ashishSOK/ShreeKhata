@@ -5,6 +5,9 @@ import ExcelJS from 'exceljs';
 // @desc    Generate monthly report
 // @route   GET /api/reports/monthly
 // @access  Private
+// @desc    Generate monthly report
+// @route   GET /api/reports/monthly
+// @access  Private
 export const getMonthlyReport = async (req, res) => {
     try {
         const { month, year } = req.query;
@@ -12,50 +15,92 @@ export const getMonthlyReport = async (req, res) => {
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0, 23, 59, 59);
 
-        const transactions = await Transaction.find({
+        const matchStage = {
             user: req.user._id,
             date: { $gte: startDate, $lte: endDate }
-        }).sort({ date: 1 });
+        };
 
-        let totalIncome = 0;
-        let totalExpense = 0;
+        // Run parallel aggregations for different stats
+        const [summaryStats, categoryStats, paymentStats, transactions] = await Promise.all([
+            // Overall Summary
+            Transaction.aggregate([
+                { $match: matchStage },
+                {
+                    $group: {
+                        _id: null,
+                        totalIncome: {
+                            $sum: {
+                                $cond: [{ $in: ['$type', ['income', 'credit_received']] }, '$amount', 0]
+                            }
+                        },
+                        totalExpense: {
+                            $sum: {
+                                $cond: [{ $in: ['$type', ['expense', 'purchase']] }, '$amount', 0]
+                            }
+                        },
+                        transactionCount: { $sum: 1 }
+                    }
+                }
+            ]),
+
+            // Category Wise
+            Transaction.aggregate([
+                {
+                    $match: {
+                        ...matchStage,
+                        type: { $in: ['expense', 'purchase'] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$category',
+                        amount: { $sum: '$amount' }
+                    }
+                }
+            ]),
+
+            // Payment Mode Wise
+            Transaction.aggregate([
+                {
+                    $match: {
+                        ...matchStage,
+                        type: { $in: ['expense', 'purchase'] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$paymentMode',
+                        amount: { $sum: '$amount' }
+                    }
+                }
+            ]),
+
+            // Detailed Transactions List
+            Transaction.find(matchStage).sort({ date: 1 })
+        ]);
+
+        const summary = summaryStats[0] || { totalIncome: 0, totalExpense: 0, transactionCount: 0 };
+        summary.netBalance = summary.totalIncome - summary.totalExpense;
 
         const categoryWise = {};
+        categoryStats.forEach(stat => {
+            categoryWise[stat._id] = stat.amount;
+        });
+
         const paymentModeWise = {};
-
-        transactions.forEach((txn) => {
-            if (txn.type === 'income' || txn.type === 'credit_received') {
-                totalIncome += txn.amount;
-            } else {
-                totalExpense += txn.amount;
-
-                // Category wise
-                if (!categoryWise[txn.category]) {
-                    categoryWise[txn.category] = 0;
-                }
-                categoryWise[txn.category] += txn.amount;
-
-                // Payment mode wise
-                if (!paymentModeWise[txn.paymentMode]) {
-                    paymentModeWise[txn.paymentMode] = 0;
-                }
-                paymentModeWise[txn.paymentMode] += txn.amount;
-            }
+        paymentStats.forEach(stat => {
+            paymentModeWise[stat._id] = stat.amount;
         });
 
         res.json({
             period: { month, year, startDate, endDate },
-            summary: {
-                totalIncome,
-                totalExpense,
-                netBalance: totalIncome - totalExpense,
-                transactionCount: transactions.length
-            },
+            summary,
             categoryWise,
             paymentModeWise,
             transactions
         });
     } catch (error) {
+        console.error('Error in getMonthlyReport:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -63,46 +108,60 @@ export const getMonthlyReport = async (req, res) => {
 // @desc    Generate vendor report
 // @route   GET /api/reports/vendor
 // @access  Private
+// @desc    Generate vendor report
+// @route   GET /api/reports/vendor
+// @access  Private
 export const getVendorReport = async (req, res) => {
     try {
         const { vendor, startDate, endDate } = req.query;
 
-        const query = { user: req.user._id };
+        const matchStage = {
+            user: req.user._id,
+            vendor: { $exists: true, $ne: '' }
+        };
 
         if (vendor) {
-            query.vendor = { $regex: vendor, $options: 'i' };
+            matchStage.vendor = { $regex: vendor, $options: 'i' };
         }
 
         if (startDate || endDate) {
-            query.date = {};
-            if (startDate) query.date.$gte = new Date(startDate);
-            if (endDate) query.date.$lte = new Date(endDate);
+            matchStage.date = {};
+            if (startDate) matchStage.date.$gte = new Date(startDate);
+            if (endDate) matchStage.date.$lte = new Date(endDate);
         }
 
-        const transactions = await Transaction.find(query).sort({ date: -1 });
-
-        // Group by vendor
-        const vendorWise = {};
-        transactions.forEach((txn) => {
-            if (txn.vendor) {
-                if (!vendorWise[txn.vendor]) {
-                    vendorWise[txn.vendor] = {
-                        totalAmount: 0,
-                        transactionCount: 0,
-                        transactions: []
-                    };
+        const vendorStats = await Transaction.aggregate([
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: '$vendor',
+                    totalAmount: { $sum: '$amount' },
+                    transactionCount: { $sum: 1 },
+                    transactions: { $push: '$$ROOT' }
                 }
-                vendorWise[txn.vendor].totalAmount += txn.amount;
-                vendorWise[txn.vendor].transactionCount++;
-                vendorWise[txn.vendor].transactions.push(txn);
-            }
+            },
+            { $sort: { totalAmount: -1 } }
+        ]);
+
+        // Transform to expected format
+        const vendorWise = {};
+        let totalTransactions = 0;
+
+        vendorStats.forEach(stat => {
+            vendorWise[stat._id] = {
+                totalAmount: stat.totalAmount,
+                transactionCount: stat.transactionCount,
+                transactions: stat.transactions
+            };
+            totalTransactions += stat.transactionCount;
         });
 
         res.json({
             vendorWise,
-            totalTransactions: transactions.length
+            totalTransactions
         });
     } catch (error) {
+        console.error('Error in getVendorReport:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -110,44 +169,57 @@ export const getVendorReport = async (req, res) => {
 // @desc    Generate category report
 // @route   GET /api/reports/category
 // @access  Private
+// @desc    Generate category report
+// @route   GET /api/reports/category
+// @access  Private
 export const getCategoryReport = async (req, res) => {
     try {
         const { category, startDate, endDate } = req.query;
 
-        const query = { user: req.user._id };
+        const matchStage = { user: req.user._id };
 
         if (category) {
-            query.category = category;
+            matchStage.category = category;
         }
 
         if (startDate || endDate) {
-            query.date = {};
-            if (startDate) query.date.$gte = new Date(startDate);
-            if (endDate) query.date.$lte = new Date(endDate);
+            matchStage.date = {};
+            if (startDate) matchStage.date.$gte = new Date(startDate);
+            if (endDate) matchStage.date.$lte = new Date(endDate);
         }
 
-        const transactions = await Transaction.find(query).sort({ date: -1 });
+        const categoryStats = await Transaction.aggregate([
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: '$category',
+                    totalAmount: { $sum: '$amount' },
+                    transactionCount: { $sum: 1 },
+                    transactions: { $push: '$$ROOT' }
+                }
+            },
+            { $sort: { totalAmount: -1 } }
+        ]);
 
-        // Group by category
+        // Transform to expected format
         const categoryWise = {};
-        transactions.forEach((txn) => {
-            if (!categoryWise[txn.category]) {
-                categoryWise[txn.category] = {
-                    totalAmount: 0,
-                    transactionCount: 0,
-                    transactions: []
-                };
-            }
-            categoryWise[txn.category].totalAmount += txn.amount;
-            categoryWise[txn.category].transactionCount++;
-            categoryWise[txn.category].transactions.push(txn);
+        let totalTransactions = 0;
+
+        categoryStats.forEach(stat => {
+            categoryWise[stat._id] = {
+                totalAmount: stat.totalAmount,
+                transactionCount: stat.transactionCount,
+                transactions: stat.transactions
+            };
+            totalTransactions += stat.transactionCount;
         });
 
         res.json({
             categoryWise,
-            totalTransactions: transactions.length
+            totalTransactions
         });
     } catch (error) {
+        console.error('Error in getCategoryReport:', error);
         res.status(500).json({ message: error.message });
     }
 };

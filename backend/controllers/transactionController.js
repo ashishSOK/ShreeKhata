@@ -3,23 +3,34 @@ import Receipt from '../models/Receipt.js';
 import mongoose from 'mongoose';
 import cloudinary from '../config/cloudinary.js';
 
-// Helper function to calculate balance
+// Helper function to calculate balance using aggregation
 const calculateBalance = async (userId, upToDate) => {
-    const transactions = await Transaction.find({
-        user: userId,
-        date: { $lte: upToDate }
-    }).sort({ date: 1 });
-
-    let balance = 0;
-    transactions.forEach((transaction) => {
-        if (transaction.type === 'income' || transaction.type === 'credit_received') {
-            balance += transaction.amount;
-        } else {
-            balance -= transaction.amount;
+    const result = await Transaction.aggregate([
+        {
+            $match: {
+                user: new mongoose.Types.ObjectId(userId),
+                date: { $lte: new Date(upToDate) }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalIncome: {
+                    $sum: {
+                        $cond: [{ $in: ['$type', ['income', 'credit_received']] }, '$amount', 0]
+                    }
+                },
+                totalExpense: {
+                    $sum: {
+                        $cond: [{ $in: ['$type', ['expense', 'purchase']] }, '$amount', 0]
+                    }
+                }
+            }
         }
-    });
+    ]);
 
-    return balance;
+    if (result.length === 0) return 0;
+    return result[0].totalIncome - result[0].totalExpense;
 };
 
 // @desc    Create new transaction
@@ -111,19 +122,26 @@ export const getTransactions = async (req, res) => {
         }
 
         if (search) {
+            const searchRegex = { $regex: search, $options: 'i' };
             query.$or = [
-                { vendor: { $regex: search, $options: 'i' } },
-                { notes: { $regex: search, $options: 'i' } },
-                { category: { $regex: search, $options: 'i' } }
+                { vendor: searchRegex },
+                { notes: searchRegex },
+                // Only search category if it's stored as a string. If it's an ID, this will fail or need population.
+                // Assuming category is a string name based on other parts of the code.
+                { category: searchRegex }
             ];
         }
 
+        console.log('Get Transactions Query:', JSON.stringify(query, null, 2)); // Debug logging
+
         const transactions = await Transaction.find(query)
             .sort({ date: -1, createdAt: -1 })
-            .limit(limit * 1)
-            .skip((page - 1) * limit);
+            .limit(Number(limit))
+            .skip((Number(page) - 1) * Number(limit));
 
         const count = await Transaction.countDocuments(query);
+
+        console.log(`Found ${transactions.length} transactions, Total: ${count}`); // Debug logging
 
         res.json({
             transactions,
