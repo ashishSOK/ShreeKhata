@@ -43,6 +43,7 @@ import { formatCurrency, formatDate, getTransactionTypeColor } from '../utils/fo
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PageLoader from '../components/common/PageLoader';
+import DeleteConfirmationDialog from '../components/common/DeleteConfirmationDialog';
 
 const Ledger = () => {
     const theme = useTheme();
@@ -70,6 +71,10 @@ const Ledger = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+    const [deleteConfirmation, setDeleteConfirmation] = useState({
+        open: false,
+        id: null
+    });
 
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -229,27 +234,36 @@ const Ledger = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this transaction?')) {
-            // Optimistic UI update
-            const checkTransactions = [...transactions];
-            const updatedTransactions = transactions.filter(t => t._id !== id);
-            setTransactions(updatedTransactions);
+    const handleDelete = (id) => {
+        setDeleteConfirmation({ open: true, id });
+    };
 
-            // Show success immediately for better UX
-            setSuccess('Transaction deleted successfully');
+    const handleCloseDeleteDialog = () => {
+        setDeleteConfirmation({ open: false, id: null });
+    };
 
-            try {
-                await transactionAPI.delete(id);
-                // Background reload to ensure consistency (optional, but good for sync)
-                // loadTransactions(); 
-            } catch (error) {
-                console.error('Error deleting transaction:', error);
-                // Revert changes if API fails
-                setTransactions(checkTransactions);
-                setError('Failed to delete transaction');
-                setSuccess(''); // Clear the success message
-            }
+    const confirmDelete = async () => {
+        const id = deleteConfirmation.id;
+        handleCloseDeleteDialog();
+
+        // Optimistic UI update
+        const checkTransactions = [...transactions];
+        const updatedTransactions = transactions.filter(t => t._id !== id);
+        setTransactions(updatedTransactions);
+
+        // Show success immediately for better UX
+        setSuccess('Transaction deleted successfully');
+
+        try {
+            await transactionAPI.delete(id);
+            // Background reload to ensure consistency (optional, but good for sync)
+            // loadTransactions(); 
+        } catch (error) {
+            console.error('Error deleting transaction:', error);
+            // Revert changes if API fails
+            setTransactions(checkTransactions);
+            setError('Failed to delete transaction');
+            setSuccess(''); // Clear the success message
         }
     };
 
@@ -893,7 +907,16 @@ const Ledger = () => {
                     <Button onClick={() => setOpenReceiptDialog(false)}>Close</Button>
                 </DialogActions>
             </Dialog>
-        </Box>
+
+            {/* Delete Confirmation Dialog */}
+            <DeleteConfirmationDialog
+                open={deleteConfirmation.open}
+                onClose={handleCloseDeleteDialog}
+                onConfirm={confirmDelete}
+                title="Delete Transaction"
+                description="Are you sure you want to delete this transaction? This action cannot be undone."
+            />
+        </Box >
     );
 };
 
