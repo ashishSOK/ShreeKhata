@@ -230,6 +230,7 @@ export const getCategoryReport = async (req, res) => {
 export const exportToPDF = async (req, res) => {
     try {
         const { startDate, endDate, title } = req.query;
+        console.log(`Starting PDF Export: ${startDate} to ${endDate}`);
 
         const query = { user: req.user._id };
         if (startDate || endDate) {
@@ -239,6 +240,7 @@ export const exportToPDF = async (req, res) => {
         }
 
         const transactions = await Transaction.find(query).sort({ date: 1 });
+        console.log(`Found ${transactions.length} transactions for PDF export`);
 
         const doc = new PDFDocument({
             margin: 50,
@@ -461,6 +463,7 @@ export const exportToPDF = async (req, res) => {
 export const exportToExcel = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
+        console.log(`Starting Excel Export: ${startDate} to ${endDate}`);
 
         const query = { user: req.user._id };
         if (startDate || endDate) {
@@ -470,6 +473,7 @@ export const exportToExcel = async (req, res) => {
         }
 
         const transactions = await Transaction.find(query).sort({ date: 1 });
+        console.log(`Found ${transactions.length} transactions for Excel export`);
 
         const workbook = new ExcelJS.Workbook();
         workbook.creator = 'ShreeKhata';

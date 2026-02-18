@@ -277,6 +277,7 @@ const Welcome = () => {
                                     onClick={() => navigate('/signup')}
                                     endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
                                     sx={{
+                                        display: { xs: 'none', sm: 'flex' }, // Hide on mobile
                                         px: { xs: 2, md: 3 },
                                         py: 1.25,
                                         ml: 1,
@@ -301,23 +302,16 @@ const Welcome = () => {
                 </Container>
             </AppBar>
 
-            {/* Hero Section with 3D Perspective */}
+            {/* Hero Section */}
             <Box
                 sx={{
                     pt: { xs: 4, md: 6 },
                     pb: { xs: 8, md: 12 },
-                    perspective: '2000px',
-                    perspectiveOrigin: 'center center',
+                    // Removed 3D perspective
                 }}
             >
                 <Container maxWidth="xl">
-                    <Box
-                        sx={{
-                            transformStyle: 'preserve-3d',
-                            transform: `rotateY(${mousePosition.x * 0.5}deg) rotateX(${-mousePosition.y * 0.5}deg)`,
-                            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                    >
+                    <Box>
                         <Grid container spacing={8} alignItems="center">
                             {/* Left: Content */}
                             <Grid item xs={12} md={6}>
@@ -356,7 +350,11 @@ const Welcome = () => {
                                         Infrastructure powering modern, stablecoin-powered payment experiences for
                                         businesses, fintechs, wallets, treasuries and more.
                                     </Typography>
-                                    <Stack direction="row" spacing={2}>
+                                    <Stack
+                                        direction={{ xs: 'column', sm: 'row' }}
+                                        spacing={2}
+                                        sx={{ width: { xs: '100%', sm: 'auto' } }}
+                                    >
                                         <Button
                                             onClick={() => navigate('/signup')}
                                             endIcon={<ArrowForward sx={{ fontSize: 18 }} />}
@@ -370,6 +368,7 @@ const Welcome = () => {
                                                 fontSize: '1rem',
                                                 borderRadius: 1.5,
                                                 boxShadow: 'none',
+                                                width: { xs: '100%', sm: 'auto' },
                                                 '&:hover': {
                                                     bgcolor: '#0D9488',
                                                     boxShadow: 'none',
@@ -390,6 +389,7 @@ const Welcome = () => {
                                                 borderRadius: 1.5,
                                                 border: '1.5px solid',
                                                 borderColor: 'divider',
+                                                width: { xs: '100%', sm: 'auto' },
                                                 '&:hover': {
                                                     bgcolor: 'action.hover',
                                                     borderColor: 'text.secondary',

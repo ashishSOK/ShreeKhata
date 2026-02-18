@@ -217,17 +217,18 @@ const Dashboard = () => {
                     <StatCard
                         title="Today's Expense"
                         value={formatCurrency(summary?.today?.expense || 0)}
-                        icon={<TrendingDown sx={{ color: '#ef4444' }} />}
-                        color="#ef4444"
+                        icon={Number(summary?.today?.expense || 0) > 0 ? <TrendingDown sx={{ color: '#ef4444' }} /> : <TrendingUp sx={{ color: '#10b981' }} />}
+                        color={Number(summary?.today?.expense || 0) > 0 ? '#ef4444' : '#10b981'}
                         delay={0}
                     />
                 </Grid>
                 <Grid item xs={12} sm={6} lg={3}>
                     <StatCard
-                        title="Weekly Expense"
-                        value={formatCurrency(summary?.week?.expense || 0)}
-                        icon={<TrendingDown sx={{ color: '#f59e0b' }} />}
-                        color="#f59e0b"
+                        title="Net Balance"
+                        value={formatCurrency(summary?.netBalance || 0)}
+                        icon={<AccountBalance sx={{ color: '#3b82f6' }} />}
+                        color="#3b82f6"
+                        trend={null}
                         delay={0.1}
                     />
                 </Grid>

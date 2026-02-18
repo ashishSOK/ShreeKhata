@@ -5,7 +5,8 @@
 }
 
 html {
-  font-size: 93.75%; /* Sets base font size to 15px (16px * 0.9375) */
+  font-size: 93.75%;
+  /* Sets base font size to 15px (16px * 0.9375) */
 }
 
 body {
@@ -71,6 +72,7 @@ code {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -86,6 +88,7 @@ code {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -101,6 +104,7 @@ code {
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -108,11 +112,9 @@ code {
 
 .shimmer {
   animation: shimmer 2s infinite linear;
-  background: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.3) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background: linear-gradient(to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%);
   background-size: 1000px 100%;
 }

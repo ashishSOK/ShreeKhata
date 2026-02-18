@@ -127,7 +127,44 @@ export const getSummary = async (req, res) => {
             ])
         ]);
 
+        // Net Balance (All time)
+        const netBalanceStats = await Transaction.aggregate([
+            {
+                $match: {
+                    user: userId
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalIncome: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$type', ['income', 'credit_received']] },
+                                '$amount',
+                                0
+                            ]
+                        }
+                    },
+                    totalExpense: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$type', ['expense', 'purchase']] },
+                                '$amount',
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]);
+
+        const netBalance = netBalanceStats.length > 0
+            ? netBalanceStats[0].totalIncome - netBalanceStats[0].totalExpense
+            : 0;
+
         res.json({
+            netBalance,
             today: {
                 expense: todayStats[0]?.expense || 0,
                 cash: todayStats[0]?.cash || 0,
