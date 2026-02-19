@@ -553,13 +553,80 @@ export const exportToExcel = async (req, res) => {
             { key: 'balance', width: 15 }
         ];
 
+        // Calculate opening balance if startDate is provided
+        let openingBalance = 0;
+        if (startDate) {
+            const openingBalanceResult = await Transaction.aggregate([
+                {
+                    $match: {
+                        user: req.user._id,
+                        date: { $lt: new Date(startDate) }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalIncome: {
+                            $sum: {
+                                $cond: [{ $in: ['$type', ['income', 'credit_received']] }, '$amount', 0]
+                            }
+                        },
+                        totalExpense: {
+                            $sum: {
+                                $cond: [{ $in: ['$type', ['expense', 'purchase']] }, '$amount', 0]
+                            }
+                        }
+                    }
+                }
+            ]);
+
+            if (openingBalanceResult.length > 0) {
+                openingBalance = openingBalanceResult[0].totalIncome - openingBalanceResult[0].totalExpense;
+            }
+        }
+
         // Add transactions with styling
         let totalIncome = 0;
         let totalExpense = 0;
+        let runningBalance = openingBalance;
         let rowIndex = 5; // Starting after header
+
+        // Add Opening Balance Row if applicable
+        if (startDate) {
+            const openingRow = worksheet.addRow({
+                date: '',
+                type: '',
+                category: 'Opening Balance',
+                amount: '',
+                paymentMode: '',
+                vendor: '',
+                notes: '',
+                balance: runningBalance
+            });
+
+            // Style opening balance row
+            openingRow.font = { italic: true, color: { argb: 'FF64748B' } };
+            openingRow.getCell(3).font = { bold: true, italic: true };
+
+            const balanceCell = openingRow.getCell(8);
+            balanceCell.numFmt = '₹#,##0.00';
+            balanceCell.alignment = { horizontal: 'right' };
+            balanceCell.font = { bold: true };
+
+            rowIndex++;
+        }
 
         transactions.forEach((txn, index) => {
             const isIncome = txn.type === 'income' || txn.type === 'credit_received';
+
+            // Update running balance
+            if (isIncome) {
+                runningBalance += txn.amount;
+                totalIncome += txn.amount;
+            } else {
+                runningBalance -= txn.amount;
+                totalExpense += txn.amount;
+            }
 
             const row = worksheet.addRow({
                 date: new Date(txn.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -569,7 +636,7 @@ export const exportToExcel = async (req, res) => {
                 paymentMode: txn.paymentMode || '-',
                 vendor: txn.vendor || '-',
                 notes: txn.notes || '-',
-                balance: txn.balance
+                balance: runningBalance
             });
 
             // Alternate row coloring
@@ -605,12 +672,6 @@ export const exportToExcel = async (req, res) => {
             // Center align date and payment mode
             row.getCell(1).alignment = { horizontal: 'center' };
             row.getCell(5).alignment = { horizontal: 'center' };
-
-            if (isIncome) {
-                totalIncome += txn.amount;
-            } else {
-                totalExpense += txn.amount;
-            }
 
             rowIndex++;
         });
