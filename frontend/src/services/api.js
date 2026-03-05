@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5002/api',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5003/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -42,6 +42,7 @@ export const authAPI = {
     updateProfile: (data) => API.put('/auth/profile', data),
     forgotPassword: (email) => API.post('/auth/forgot-password', { email }),
     resetPassword: (token, password) => API.post(`/auth/reset-password/${token}`, { password }),
+    searchOwners: (search) => API.get('/auth/owners', { params: { search } }),
 };
 
 // Transaction APIs
@@ -85,6 +86,7 @@ export const reportAPI = {
     getMonthly: (params) => API.get('/reports/monthly', { params }),
     getVendor: (params) => API.get('/reports/vendor', { params }),
     getCategory: (params) => API.get('/reports/category', { params }),
+    getMemberReport: (memberId, params) => API.get(`/reports/member/${memberId}`, { params }),
     exportPDF: (params) => API.get('/reports/export/pdf', {
         params,
         responseType: 'blob',
@@ -93,6 +95,15 @@ export const reportAPI = {
         params,
         responseType: 'blob',
     }),
+};
+
+// Members APIs
+export const membersAPI = {
+    getAll: () => API.get('/members'),
+    getPendingCount: () => API.get('/members/pending-count'),
+    approve: (memberId) => API.put(`/members/${memberId}/approve`),
+    reject: (memberId) => API.put(`/members/${memberId}/reject`),
+    getStats: (memberId) => API.get(`/members/${memberId}/stats`),
 };
 
 export default API;

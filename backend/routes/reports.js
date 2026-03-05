@@ -4,7 +4,8 @@ import {
     getVendorReport,
     getCategoryReport,
     exportToPDF,
-    exportToExcel
+    exportToExcel,
+    getMemberReport
 } from '../controllers/reportController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -15,5 +16,7 @@ router.get('/vendor', protect, getVendorReport);
 router.get('/category', protect, getCategoryReport);
 router.get('/export/pdf', protect, exportToPDF);
 router.get('/export/excel', protect, exportToExcel);
+router.get('/member/:memberId', protect, getMemberReport);
 
 export default router;
+

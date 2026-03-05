@@ -5,12 +5,14 @@ import {
     getProfile,
     updateProfile,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    searchOwners
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
+router.get('/owners', searchOwners); // Public — for member signup
 router.post('/signup', signup);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);

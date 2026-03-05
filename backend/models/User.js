@@ -36,6 +36,21 @@ const userSchema = new mongoose.Schema(
             trim: true,
             uppercase: true
         },
+        role: {
+            type: String,
+            enum: ['owner', 'member'],
+            default: 'owner'
+        },
+        ownerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        },
+        membershipStatus: {
+            type: String,
+            enum: ['pending', 'approved', 'rejected'],
+            default: null
+        },
         resetPasswordToken: String,
         resetPasswordExpire: Date
     },

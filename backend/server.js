@@ -15,6 +15,7 @@ import categoryRoutes from './routes/categories.js';
 import receiptRoutes from './routes/receipts.js';
 import dashboardRoutes from './routes/dashboard.js';
 import reportRoutes from './routes/reports.js';
+import membersRoutes from './routes/members.js';
 
 // Initialize Express app
 const app = express();
@@ -50,6 +51,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/receipts', receiptRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/members', membersRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -80,7 +82,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT || 5003;
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 ShreeKhata Server running on port ${PORT}`);

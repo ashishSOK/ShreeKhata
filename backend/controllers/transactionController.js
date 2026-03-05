@@ -3,12 +3,19 @@ import Receipt from '../models/Receipt.js';
 import mongoose from 'mongoose';
 import cloudinary from '../config/cloudinary.js';
 
+// Determine the owner's userId for a given requester
+// If member -> their ownerId; if owner -> their own _id
+const getOwnerUserId = (user) => {
+    if (user.role === 'member') return user.ownerId;
+    return user._id;
+};
+
 // Helper function to calculate balance using aggregation
-const calculateBalance = async (userId, upToDate) => {
+const calculateBalance = async (ownerId, upToDate) => {
     const result = await Transaction.aggregate([
         {
             $match: {
-                user: new mongoose.Types.ObjectId(userId),
+                user: new mongoose.Types.ObjectId(ownerId),
                 date: { $lte: new Date(upToDate) }
             }
         },
@@ -38,10 +45,17 @@ const calculateBalance = async (userId, upToDate) => {
 // @access  Private
 export const createTransaction = async (req, res) => {
     try {
+        // Members must be approved before they can add transactions
+        if (req.user.role === 'member' && req.user.membershipStatus !== 'approved') {
+            return res.status(403).json({ message: 'Your membership is pending approval' });
+        }
+
         const { type, date, amount, category, paymentMode, vendor, notes } = req.body;
+        const ownerUserId = getOwnerUserId(req.user);
 
         const transaction = await Transaction.create({
-            user: req.user._id,
+            user: ownerUserId,
+            addedBy: req.user._id,
             type,
             date,
             amount,
@@ -52,13 +66,13 @@ export const createTransaction = async (req, res) => {
         });
 
         // Calculate and update balance
-        const balance = await calculateBalance(req.user._id, transaction.date);
+        const balance = await calculateBalance(ownerUserId, transaction.date);
         transaction.balance = balance;
         await transaction.save();
 
         // Update balances for all subsequent transactions
         const laterTransactions = await Transaction.find({
-            user: req.user._id,
+            user: ownerUserId,
             date: { $gt: transaction.date }
         }).sort({ date: 1 });
 
@@ -73,6 +87,8 @@ export const createTransaction = async (req, res) => {
             await laterTxn.save();
         }
 
+        // Populate addedBy name for the response
+        await transaction.populate('addedBy', 'name');
         res.status(201).json(transaction);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -95,11 +111,14 @@ export const getTransactions = async (req, res) => {
             type,
             minAmount,
             maxAmount,
-            search
+            search,
+            addedBy
         } = req.query;
 
+        const ownerUserId = getOwnerUserId(req.user);
+
         // Build query
-        const query = { user: req.user._id };
+        const query = { user: ownerUserId };
 
         if (startDate || endDate) {
             query.date = {};
@@ -121,27 +140,26 @@ export const getTransactions = async (req, res) => {
             query.vendor = { $regex: vendor, $options: 'i' };
         }
 
+        if (addedBy) {
+            query.addedBy = new mongoose.Types.ObjectId(addedBy);
+        }
+
         if (search) {
             const searchRegex = { $regex: search, $options: 'i' };
             query.$or = [
                 { vendor: searchRegex },
                 { notes: searchRegex },
-                // Only search category if it's stored as a string. If it's an ID, this will fail or need population.
-                // Assuming category is a string name based on other parts of the code.
                 { category: searchRegex }
             ];
         }
 
-        console.log('Get Transactions Query:', JSON.stringify(query, null, 2)); // Debug logging
-
         const transactions = await Transaction.find(query)
+            .populate('addedBy', 'name')
             .sort({ date: -1, createdAt: -1 })
             .limit(Number(limit))
             .skip((Number(page) - 1) * Number(limit));
 
         const count = await Transaction.countDocuments(query);
-
-        console.log(`Found ${transactions.length} transactions, Total: ${count}`); // Debug logging
 
         res.json({
             transactions,
@@ -160,10 +178,11 @@ export const getTransactions = async (req, res) => {
 // @access  Private
 export const getTransactionById = async (req, res) => {
     try {
+        const ownerUserId = getOwnerUserId(req.user);
         const transaction = await Transaction.findOne({
             _id: req.params.id,
-            user: req.user._id
-        });
+            user: ownerUserId
+        }).populate('addedBy', 'name');
 
         if (!transaction) {
             return res.status(404).json({ message: 'Transaction not found' });
@@ -180,13 +199,20 @@ export const getTransactionById = async (req, res) => {
 // @access  Private
 export const updateTransaction = async (req, res) => {
     try {
+        const ownerUserId = getOwnerUserId(req.user);
         const transaction = await Transaction.findOne({
             _id: req.params.id,
-            user: req.user._id
+            user: ownerUserId
         });
 
         if (!transaction) {
             return res.status(404).json({ message: 'Transaction not found' });
+        }
+
+        // Members can only edit their own transactions
+        if (req.user.role === 'member' &&
+            transaction.addedBy.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'You can only edit transactions you added' });
         }
 
         const { type, date, amount, category, paymentMode, vendor, notes } = req.body;
@@ -204,11 +230,11 @@ export const updateTransaction = async (req, res) => {
         // Recalculate all balances from the earliest affected date
         const earliestDate = new Date(Math.min(new Date(transaction.date), new Date(date || transaction.date)));
         const allTransactions = await Transaction.find({
-            user: req.user._id,
+            user: ownerUserId,
             date: { $gte: earliestDate }
         }).sort({ date: 1 });
 
-        let balance = await calculateBalance(req.user._id, earliestDate);
+        let balance = await calculateBalance(ownerUserId, earliestDate);
 
         for (const txn of allTransactions) {
             if (txn.type === 'income' || txn.type === 'credit_received') {
@@ -222,6 +248,7 @@ export const updateTransaction = async (req, res) => {
             }
         }
 
+        await transaction.populate('addedBy', 'name');
         res.json(transaction);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -234,14 +261,21 @@ export const updateTransaction = async (req, res) => {
 export const deleteTransaction = async (req, res) => {
     console.log('Attempting to delete transaction:', req.params.id);
     try {
+        const ownerUserId = getOwnerUserId(req.user);
         const transaction = await Transaction.findOne({
             _id: req.params.id,
-            user: req.user._id
+            user: ownerUserId
         });
 
         if (!transaction) {
             console.log('Transaction not found or unauthorized');
             return res.status(404).json({ message: 'Transaction not found' });
+        }
+
+        // Members can only delete their own transactions
+        if (req.user.role === 'member' &&
+            transaction.addedBy.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'You can only delete transactions you added' });
         }
 
         console.log('Found transaction, deleting associated receipts...');
@@ -273,11 +307,11 @@ export const deleteTransaction = async (req, res) => {
 
         // Recalculate balances for all subsequent transactions
         const laterTransactions = await Transaction.find({
-            user: req.user._id,
+            user: ownerUserId,
             date: { $gte: transactionDate }
         }).sort({ date: 1 });
 
-        let balance = await calculateBalance(req.user._id, transactionDate);
+        let balance = await calculateBalance(ownerUserId, transactionDate);
 
         for (const txn of laterTransactions) {
             if (txn.type === 'income' || txn.type === 'credit_received') {
@@ -304,6 +338,7 @@ export const getDailySummary = async (req, res) => {
     try {
         const { date } = req.query;
         const targetDate = date ? new Date(date) : new Date();
+        const ownerUserId = getOwnerUserId(req.user);
 
         const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
         const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
@@ -311,11 +346,11 @@ export const getDailySummary = async (req, res) => {
         // Get opening balance (balance at end of previous day)
         const previousDay = new Date(startOfDay);
         previousDay.setDate(previousDay.getDate() - 1);
-        const openingBalance = await calculateBalance(req.user._id, previousDay);
+        const openingBalance = await calculateBalance(ownerUserId, previousDay);
 
         // Get today's transactions
         const todayTransactions = await Transaction.find({
-            user: req.user._id,
+            user: ownerUserId,
             date: { $gte: startOfDay, $lte: endOfDay }
         });
 

@@ -8,6 +8,12 @@ const transactionSchema = new mongoose.Schema(
             required: true,
             index: true
         },
+        addedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+            index: true
+        },
         type: {
             type: String,
             enum: ['expense', 'purchase', 'income', 'credit_given', 'credit_received'],

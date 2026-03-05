@@ -16,13 +16,14 @@ const Ledger = lazy(() => import('./pages/Ledger'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Profile = lazy(() => import('./pages/Profile'));
+const Members = lazy(() => import('./pages/Members'));
 
 function App() {
   useEffect(() => {
     // Ping server to wake it up (Render cold start)
     const wakeUpServer = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002/api';
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5003/api';
         await fetch(`${API_URL}/health`);
       } catch (error) {
         console.log('Server wake-up ping failed:', error);
@@ -58,6 +59,7 @@ function App() {
                 <Route path="categories" element={<Categories />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="members" element={<Members />} />
               </Route>
 
               {/* Catch all - redirect to welcome for non-authenticated, dashboard for authenticated */}

@@ -10,17 +10,64 @@ const generateToken = (id) => {
     });
 };
 
+// Helper to format user response
+const formatUser = (user) => ({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    shopName: user.shopName,
+    gstNumber: user.gstNumber,
+    role: user.role,
+    ownerId: user.ownerId,
+    membershipStatus: user.membershipStatus
+});
+
+// @desc    Search owners (for member signup dropdown)
+// @route   GET /api/auth/owners
+// @access  Public
+export const searchOwners = async (req, res) => {
+    try {
+        const { search } = req.query;
+        const query = { role: 'owner' };
+
+        if (search) {
+            const regex = { $regex: search, $options: 'i' };
+            query.$or = [{ name: regex }, { shopName: regex }];
+        }
+
+        const owners = await User.find(query)
+            .select('_id name shopName')
+            .limit(20);
+
+        res.json(owners);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Register new user
 // @route   POST /api/auth/signup
 // @access  Public
 export const signup = async (req, res) => {
     try {
-        const { name, email, phone, password, shopName, gstNumber } = req.body;
+        const { name, email, phone, password, shopName, gstNumber, role, ownerId } = req.body;
 
         // Check if user exists
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: 'User already exists with this email' });
+        }
+
+        // Validate member-specific fields
+        if (role === 'member') {
+            if (!ownerId) {
+                return res.status(400).json({ message: 'Please select an owner to join' });
+            }
+            const ownerExists = await User.findOne({ _id: ownerId, role: 'owner' });
+            if (!ownerExists) {
+                return res.status(400).json({ message: 'Selected owner not found' });
+            }
         }
 
         // Create user
@@ -29,18 +76,16 @@ export const signup = async (req, res) => {
             email,
             phone,
             password,
-            shopName,
-            gstNumber
+            shopName: role === 'owner' ? shopName : undefined,
+            gstNumber: role === 'owner' ? gstNumber : undefined,
+            role: role || 'owner',
+            ownerId: role === 'member' ? ownerId : null,
+            membershipStatus: role === 'member' ? 'pending' : null
         });
 
         if (user) {
             res.status(201).json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                shopName: user.shopName,
-                gstNumber: user.gstNumber,
+                ...formatUser(user),
                 token: generateToken(user._id)
             });
         }
@@ -61,12 +106,7 @@ export const login = async (req, res) => {
 
         if (user && (await user.comparePassword(password))) {
             res.json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                shopName: user.shopName,
-                gstNumber: user.gstNumber,
+                ...formatUser(user),
                 token: generateToken(user._id)
             });
         } else {
@@ -82,7 +122,7 @@ export const login = async (req, res) => {
 // @access  Private
 export const getProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findById(req.user._id).populate('ownerId', 'name shopName');
         res.json(user);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -99,19 +139,14 @@ export const updateProfile = async (req, res) => {
         if (user) {
             user.name = req.body.name || user.name;
             user.phone = req.body.phone || user.phone;
-            user.shopName = req.body.shopName || user.shopName;
-            user.gstNumber = req.body.gstNumber || user.gstNumber;
+            if (user.role === 'owner') {
+                user.shopName = req.body.shopName || user.shopName;
+                user.gstNumber = req.body.gstNumber || user.gstNumber;
+            }
 
             const updatedUser = await user.save();
 
-            res.json({
-                _id: updatedUser._id,
-                name: updatedUser.name,
-                email: updatedUser.email,
-                phone: updatedUser.phone,
-                shopName: updatedUser.shopName,
-                gstNumber: updatedUser.gstNumber
-            });
+            res.json(formatUser(updatedUser));
         } else {
             res.status(404).json({ message: 'User not found' });
         }

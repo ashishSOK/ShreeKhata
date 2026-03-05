@@ -1,6 +1,13 @@
 import Transaction from '../models/Transaction.js';
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
+import mongoose from 'mongoose';
+
+// Determine the owner's userId for a given requester
+const getOwnerUserId = (user) => {
+    if (user.role === 'member') return user.ownerId;
+    return user._id;
+};
 
 // @desc    Generate monthly report
 // @route   GET /api/reports/monthly
@@ -15,8 +22,10 @@ export const getMonthlyReport = async (req, res) => {
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0, 23, 59, 59);
 
+        const ownerUserId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
+
         const matchStage = {
-            user: req.user._id,
+            user: ownerUserId,
             date: { $gte: startDate, $lte: endDate }
         };
 
@@ -115,8 +124,10 @@ export const getVendorReport = async (req, res) => {
     try {
         const { vendor, startDate, endDate } = req.query;
 
+        const ownerUserId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
+
         const matchStage = {
-            user: req.user._id,
+            user: ownerUserId,
             vendor: { $exists: true, $ne: '' }
         };
 
@@ -176,7 +187,9 @@ export const getCategoryReport = async (req, res) => {
     try {
         const { category, startDate, endDate } = req.query;
 
-        const matchStage = { user: req.user._id };
+        const ownerUserId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
+
+        const matchStage = { user: ownerUserId };
 
         if (category) {
             matchStage.category = category;
@@ -232,7 +245,9 @@ export const exportToPDF = async (req, res) => {
         const { startDate, endDate, title } = req.query;
         console.log(`Starting PDF Export: ${startDate} to ${endDate}`);
 
-        const query = { user: req.user._id };
+        const ownerUserId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
+
+        const query = { user: ownerUserId };
         if (startDate || endDate) {
             query.date = {};
             if (startDate) query.date.$gte = new Date(startDate);
@@ -465,7 +480,9 @@ export const exportToExcel = async (req, res) => {
         const { startDate, endDate } = req.query;
         console.log(`Starting Excel Export: ${startDate} to ${endDate}`);
 
-        const query = { user: req.user._id };
+        const ownerUserId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
+
+        const query = { user: ownerUserId };
         if (startDate || endDate) {
             query.date = {};
             if (startDate) query.date.$gte = new Date(startDate);
@@ -559,7 +576,7 @@ export const exportToExcel = async (req, res) => {
             const openingBalanceResult = await Transaction.aggregate([
                 {
                     $match: {
-                        user: req.user._id,
+                        user: ownerUserId,
                         date: { $lt: new Date(startDate) }
                     }
                 },
@@ -777,6 +794,66 @@ export const exportToExcel = async (req, res) => {
         await workbook.xlsx.write(res);
         res.end();
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get member-specific transaction report
+// @route   GET /api/reports/member/:memberId
+// @access  Private (owner only)
+export const getMemberReport = async (req, res) => {
+    try {
+        if (req.user.role !== 'owner') {
+            return res.status(403).json({ message: 'Only owners can view member reports' });
+        }
+
+        const { startDate, endDate } = req.query;
+        const ownerUserId = req.user._id;
+        const memberUserId = new mongoose.Types.ObjectId(req.params.memberId);
+
+        const matchStage = {
+            user: ownerUserId,
+            addedBy: memberUserId
+        };
+
+        if (startDate || endDate) {
+            matchStage.date = {};
+            if (startDate) matchStage.date.$gte = new Date(startDate);
+            if (endDate) matchStage.date.$lte = new Date(endDate);
+        }
+
+        const [summaryStats, categoryStats, transactions] = await Promise.all([
+            Transaction.aggregate([
+                { $match: matchStage },
+                {
+                    $group: {
+                        _id: null,
+                        totalIncome: {
+                            $sum: { $cond: [{ $in: ['$type', ['income', 'credit_received']] }, '$amount', 0] }
+                        },
+                        totalExpense: {
+                            $sum: { $cond: [{ $in: ['$type', ['expense', 'purchase']] }, '$amount', 0] }
+                        },
+                        transactionCount: { $sum: 1 }
+                    }
+                }
+            ]),
+            Transaction.aggregate([
+                { $match: { ...matchStage, type: { $in: ['expense', 'purchase'] } } },
+                { $group: { _id: '$category', amount: { $sum: '$amount' } } }
+            ]),
+            Transaction.find(matchStage).populate('addedBy', 'name').sort({ date: -1 })
+        ]);
+
+        const summary = summaryStats[0] || { totalIncome: 0, totalExpense: 0, transactionCount: 0 };
+        summary.netBalance = summary.totalIncome - summary.totalExpense;
+
+        const categoryWise = {};
+        categoryStats.forEach(stat => { categoryWise[stat._id] = stat.amount; });
+
+        res.json({ summary, categoryWise, transactions });
+    } catch (error) {
+        console.error('Error in getMemberReport:', error);
         res.status(500).json({ message: error.message });
     }
 };

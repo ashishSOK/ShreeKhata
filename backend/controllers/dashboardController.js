@@ -1,4 +1,11 @@
 import Transaction from '../models/Transaction.js';
+import mongoose from 'mongoose';
+
+// Determine the owner's userId for a given requester
+const getOwnerUserId = (user) => {
+    if (user.role === 'member') return user.ownerId;
+    return user._id;
+};
 
 // @desc    Get dashboard summary
 // @route   GET /api/dashboard/summary
@@ -17,7 +24,7 @@ export const getSummary = async (req, res) => {
         const monthAgo = new Date(today);
         monthAgo.setMonth(monthAgo.getMonth() - 1);
 
-        const userId = req.user._id;
+        const userId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
 
         // Run all queries in parallel
         const [todayStats, weekStats, monthStats] = await Promise.all([
@@ -130,9 +137,7 @@ export const getSummary = async (req, res) => {
         // Net Balance (All time)
         const netBalanceStats = await Transaction.aggregate([
             {
-                $match: {
-                    user: userId
-                }
+                $match: { user: userId }
             },
             {
                 $group: {
@@ -189,19 +194,18 @@ export const getSummary = async (req, res) => {
 // @desc    Get spending trend (last 30 days)
 // @route   GET /api/dashboard/trend
 // @access  Private
-// @desc    Get spending trend (last 30 days)
-// @route   GET /api/dashboard/trend
-// @access  Private
 export const getSpendingTrend = async (req, res) => {
     try {
         const daysAgo = req.query.date ? new Date(req.query.date) : new Date();
         daysAgo.setDate(daysAgo.getDate() - 30);
         daysAgo.setHours(0, 0, 0, 0);
 
+        const userId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
+
         const trend = await Transaction.aggregate([
             {
                 $match: {
-                    user: req.user._id,
+                    user: userId,
                     date: { $gte: daysAgo }
                 }
             },
@@ -251,18 +255,17 @@ export const getSpendingTrend = async (req, res) => {
 // @desc    Get category distribution
 // @route   GET /api/dashboard/category-distribution
 // @access  Private
-// @desc    Get category distribution
-// @route   GET /api/dashboard/category-distribution
-// @access  Private
 export const getCategoryDistribution = async (req, res) => {
     try {
         const monthAgo = req.query.date ? new Date(req.query.date) : new Date();
         monthAgo.setMonth(monthAgo.getMonth() - 1);
 
+        const userId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
+
         const distribution = await Transaction.aggregate([
             {
                 $match: {
-                    user: req.user._id,
+                    user: userId,
                     date: { $gte: monthAgo },
                     type: { $in: ['expense', 'purchase'] }
                 }
@@ -292,9 +295,6 @@ export const getCategoryDistribution = async (req, res) => {
 // @desc    Get monthly comparison (last 6 months)
 // @route   GET /api/dashboard/monthly-comparison
 // @access  Private
-// @desc    Get monthly comparison (last 6 months)
-// @route   GET /api/dashboard/monthly-comparison
-// @access  Private
 export const getMonthlyComparison = async (req, res) => {
     try {
         const sixMonthsAgo = req.query.date ? new Date(req.query.date) : new Date();
@@ -302,10 +302,12 @@ export const getMonthlyComparison = async (req, res) => {
         sixMonthsAgo.setDate(1); // Start from first day
         sixMonthsAgo.setHours(0, 0, 0, 0);
 
+        const userId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
+
         const comparison = await Transaction.aggregate([
             {
                 $match: {
-                    user: req.user._id,
+                    user: userId,
                     date: { $gte: sixMonthsAgo }
                 }
             },

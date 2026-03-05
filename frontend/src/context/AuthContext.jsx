@@ -85,6 +85,18 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // Re-fetch user data from server (useful after membership approval)
+    const refreshUser = async () => {
+        try {
+            const response = await authAPI.getProfile();
+            const updatedUser = response.data;
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+        } catch (error) {
+            console.error('Failed to refresh user:', error);
+        }
+    };
+
     const value = {
         user,
         loading,
@@ -92,7 +104,11 @@ export const AuthProvider = ({ children }) => {
         signup,
         logout,
         updateUserProfile,
+        refreshUser,
         isAuthenticated: !!user,
+        isOwner: user?.role === 'owner',
+        isMember: user?.role === 'member',
+        isPending: user?.role === 'member' && user?.membershipStatus === 'pending',
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

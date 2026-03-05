@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import {
     Box,
@@ -21,6 +21,8 @@ import {
     useTheme,
     Fab,
     Paper,
+    Badge,
+    Chip,
 } from '@mui/material';
 import {
     Menu as MenuIcon,
@@ -33,11 +35,13 @@ import {
     Brightness4,
     Brightness7,
     Add,
+    Group as GroupIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useThemeMode } from '../../theme/ThemeProvider';
 import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { membersAPI } from '../../services/api';
 
 const drawerWidth = 260;
 
@@ -53,12 +57,29 @@ const MainLayout = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const navigate = useNavigate();
     const location = useLocation();
-    const { user, logout } = useAuth();
+    const { user, logout, isOwner } = useAuth();
     const { mode, toggleTheme } = useThemeMode();
 
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
     const [bottomNavValue, setBottomNavValue] = useState(location.pathname);
+    const [pendingCount, setPendingCount] = useState(0);
+
+    // Fetch pending member count for owners
+    useEffect(() => {
+        if (!isOwner) return;
+        membersAPI.getPendingCount()
+            .then(res => setPendingCount(res.data.count || 0))
+            .catch(() => { });
+    }, [isOwner]);
+
+    const menuItems = [
+        { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+        { text: 'Ledger', icon: <ReceiptIcon />, path: '/ledger' },
+        { text: 'Categories', icon: <CategoryIcon />, path: '/categories' },
+        { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
+        ...(isOwner ? [{ text: 'Members', icon: <GroupIcon />, path: '/members', badge: pendingCount }] : []),
+    ];
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -117,14 +138,17 @@ const MainLayout = () => {
                                 },
                             }}
                         >
-                            <ListItemIcon
-                                sx={{
-                                    color: location.pathname === item.path ? 'white' : 'inherit',
-                                }}
-                            >
-                                {item.icon}
+                            <ListItemIcon sx={{ color: location.pathname === item.path ? 'white' : 'inherit' }}>
+                                {item.badge ? (
+                                    <Badge badgeContent={item.badge} color="error">
+                                        {item.icon}
+                                    </Badge>
+                                ) : item.icon}
                             </ListItemIcon>
                             <ListItemText primary={item.text} />
+                            {item.badge > 0 && location.pathname !== item.path && (
+                                <Chip label={item.badge} size="small" color="error" sx={{ ml: 1, height: 20 }} />
+                            )}
                         </ListItemButton>
                     </ListItem>
                 ))}
@@ -184,7 +208,7 @@ const MainLayout = () => {
 
                     <Typography variant="h6" sx={{ flexGrow: 1, color: theme.palette.text.primary }}>
                         {menuItems.find((item) => item.path === location.pathname)?.text ||
-                            'ShreeKhata'}
+                            location.pathname === '/profile' ? 'Profile' : 'ShreeKhata'}
                     </Typography>
 
                     <IconButton onClick={toggleTheme} sx={{ color: theme.palette.text.primary }}>

@@ -403,6 +403,7 @@ const Ledger = () => {
                                     <TableCell><strong>Notes</strong></TableCell>
                                     <TableCell align="right"><strong>Amount</strong></TableCell>
                                     <TableCell><strong>Payment</strong></TableCell>
+                                    <TableCell><strong>Added By</strong></TableCell>
                                     <TableCell align="right"><strong>Actions</strong></TableCell>
                                 </TableRow>
                             </TableHead>
@@ -455,6 +456,15 @@ const Ledger = () => {
                                             </TableCell>
                                             <TableCell>
                                                 <Chip label={transaction.paymentMode} size="small" variant="outlined" />
+                                            </TableCell>
+                                            <TableCell>
+                                                {transaction.addedBy ? (
+                                                    <Chip
+                                                        label={transaction.addedBy.name || 'Owner'}
+                                                        size="small"
+                                                        sx={{ bgcolor: 'rgba(99,102,241,0.1)', color: '#6366f1', fontWeight: 600 }}
+                                                    />
+                                                ) : '-'}
                                             </TableCell>
                                             <TableCell align="right">
                                                 <Stack direction="row" spacing={1} justifyContent="flex-end">
@@ -574,6 +584,11 @@ const Ledger = () => {
                                             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                                                 Payment: <Chip label={transaction.paymentMode} size="small" variant="outlined" sx={{ ml: 0.5 }} />
                                             </Typography>
+                                            {transaction.addedBy && (
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                    Added by: <Chip label={transaction.addedBy.name || 'Owner'} size="small" sx={{ ml: 0.5, bgcolor: 'rgba(99,102,241,0.1)', color: '#6366f1' }} />
+                                                </Typography>
+                                            )}
                                         </Box>
 
                                         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
