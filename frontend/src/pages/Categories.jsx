@@ -31,15 +31,15 @@ const CategoryCard = ({ category, index, onEdit, onDelete, isDefault }) => (
     >
         <Card
             sx={{
-                p: 2.5,
+                p: { xs: 1.5, sm: 2.5 },
                 height: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 2,
+                gap: { xs: 1.5, sm: 2 },
                 background: `linear-gradient(135deg, ${category.color}15 0%, ${category.color}05 100%)`,
                 backdropFilter: 'blur(10px)',
                 border: `1px solid ${category.color}30`,
-                borderRadius: 3,
+                borderRadius: { xs: 2, sm: 3 },
                 position: 'relative',
                 overflow: 'hidden',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -68,14 +68,14 @@ const CategoryCard = ({ category, index, onEdit, onDelete, isDefault }) => (
                 <Circle
                     sx={{
                         color: category.color,
-                        fontSize: 36,
+                        fontSize: { xs: 24, sm: 36 },
                         filter: `drop-shadow(0 4px 8px ${category.color}40)`,
                     }}
                 />
             </motion.div>
 
             <Box sx={{ flex: 1, position: 'relative', zIndex: 1, minWidth: 0 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, noWrap: true }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, noWrap: true, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                     {category.name}
                 </Typography>
                 {isDefault && (
@@ -276,16 +276,16 @@ const Categories = () => {
                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                     Default Categories
                 </Typography>
-                <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid container spacing={{ xs: 1.5, sm: 3 }} sx={{ mb: 4 }}>
                     {loading ? (
                         Array.from(new Array(4)).map((_, index) => (
-                            <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+                            <Grid item xs={6} sm={6} md={4} lg={3} key={index}>
                                 <CategorySkeleton />
                             </Grid>
                         ))
                     ) : (
                         defaultCategories.map((category, index) => (
-                            <Grid item xs={12} sm={6} md={4} lg={3} key={category._id}>
+                            <Grid item xs={6} sm={6} md={4} lg={3} key={category._id}>
                                 <CategoryCard
                                     category={category}
                                     index={index}
@@ -306,10 +306,10 @@ const Categories = () => {
                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                     Custom Categories
                 </Typography>
-                <Grid container spacing={3}>
+                <Grid container spacing={{ xs: 1.5, sm: 3 }}>
                     {loading ? (
                         Array.from(new Array(4)).map((_, index) => (
-                            <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+                            <Grid item xs={6} sm={6} md={4} lg={3} key={index}>
                                 <CategorySkeleton />
                             </Grid>
                         ))
@@ -351,7 +351,7 @@ const Categories = () => {
                         </Grid>
                     ) : (
                         customCategories.map((category, index) => (
-                            <Grid item xs={12} sm={6} md={4} lg={3} key={category._id}>
+                            <Grid item xs={6} sm={6} md={4} lg={3} key={category._id}>
                                 <CategoryCard
                                     category={category}
                                     index={index}

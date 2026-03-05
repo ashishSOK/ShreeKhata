@@ -33,6 +33,7 @@ import {
     Close,
     TrendingUp,
     Receipt,
+    Circle,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { membersAPI, reportAPI } from '../services/api';
@@ -53,7 +54,7 @@ const Members = () => {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState('');
     const [error, setError] = useState('');
-    const [tab, setTab] = useState(0); // 0=pending, 1=active, 2=all
+    const [tab, setTab] = useState(0); // 0=active, 1=all, 2=pending
 
     // Stats dialog
     const [statsOpen, setStatsOpen] = useState(false);
@@ -120,7 +121,7 @@ const Members = () => {
     const active = members.filter(m => m.membershipStatus === 'approved');
     const all = members;
 
-    const displayed = tab === 0 ? pending : tab === 1 ? active : all;
+    const displayed = tab === 0 ? active : tab === 1 ? all : pending;
 
     const fmt = (n) => `₹${(n || 0).toLocaleString('en-IN')}`;
 
@@ -140,17 +141,17 @@ const Members = () => {
                 </Box>
 
                 {/* Summary Cards */}
-                <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid container spacing={{ xs: 1.5, sm: 3 }} sx={{ mb: 4 }}>
                     {[
                         { label: 'Pending Requests', value: pending.length, gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', shadow: 'rgba(245, 158, 11, 0.2)' },
                         { label: 'Active Members', value: active.length, gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', shadow: 'rgba(16, 185, 129, 0.2)' },
                         { label: 'Total Members', value: all.length, gradient: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', shadow: 'rgba(99, 102, 241, 0.2)' },
                     ].map((card, index) => (
-                        <Grid item xs={12} sm={4} key={card.label}>
+                        <Grid item xs={4} sm={4} key={card.label}>
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
                                 <Paper elevation={0} sx={{
-                                    p: 3,
-                                    borderRadius: 4,
+                                    p: { xs: 1.5, sm: 3 },
+                                    borderRadius: { xs: 2, sm: 4 },
                                     background: card.gradient,
                                     color: 'white',
                                     boxShadow: `0 10px 30px ${card.shadow}`,
@@ -168,10 +169,10 @@ const Members = () => {
                                         pointerEvents: 'none',
                                     }
                                 }}>
-                                    <Typography variant="h3" fontWeight={800} sx={{ mb: 1, textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+                                    <Typography variant="h3" fontWeight={800} sx={{ mb: { xs: 0.5, sm: 1 }, textShadow: '0 2px 10px rgba(0,0,0,0.1)', fontSize: { xs: '1.25rem', sm: '3rem' } }}>
                                         {card.value}
                                     </Typography>
-                                    <Typography variant="body2" fontWeight={600} sx={{ opacity: 0.9 }}>
+                                    <Typography variant="body2" fontWeight={600} sx={{ opacity: 0.9, fontSize: { xs: '0.65rem', sm: '0.875rem' }, lineHeight: 1.2 }}>
                                         {card.label}
                                     </Typography>
                                 </Paper>
@@ -203,9 +204,9 @@ const Members = () => {
                             '& .MuiTabs-indicator': { backgroundColor: '#6366F1', height: 3, borderRadius: '3px 3px 0 0' }
                         }}
                     >
-                        <Tab label={`Pending (${pending.length})`} />
                         <Tab label={`Active (${active.length})`} />
                         <Tab label={`All (${all.length})`} />
+                        <Tab label={`Pending (${pending.length})`} />
                     </Tabs>
 
                     {loading ? (
@@ -215,7 +216,7 @@ const Members = () => {
                             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ duration: 0.5 }}>
                                 <Group sx={{ fontSize: 64, color: 'text.disabled', mb: 2, opacity: 0.5 }} />
                                 <Typography variant="h6" color="text.secondary" fontWeight={600}>
-                                    {tab === 0 ? 'No pending requests' : tab === 1 ? 'No active members yet' : 'No members found'}
+                                    {tab === 0 ? 'No active members yet' : tab === 1 ? 'No members found' : 'No pending requests'}
                                 </Typography>
                             </motion.div>
                         </Box>
@@ -226,33 +227,33 @@ const Members = () => {
                                 return (
                                     <motion.div key={member._id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
                                         <Box sx={{
-                                            p: 3,
+                                            p: { xs: 2, sm: 3 },
                                             display: 'flex',
                                             alignItems: 'center',
-                                            gap: 3,
+                                            gap: { xs: 2, sm: 3 },
                                             flexWrap: 'wrap',
                                             transition: 'all 0.2s ease',
                                             '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.04)' }
                                         }}>
                                             <Avatar sx={{
                                                 bgcolor: member.membershipStatus === 'pending' ? '#F59E0B' : member.membershipStatus === 'approved' ? '#10B981' : '#6366F1',
-                                                width: 56,
-                                                height: 56,
-                                                fontSize: '1.5rem',
+                                                width: { xs: 48, sm: 56 },
+                                                height: { xs: 48, sm: 56 },
+                                                fontSize: { xs: '1.25rem', sm: '1.5rem' },
                                                 fontWeight: 700,
                                                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                             }}>
                                                 {member.name?.[0]?.toUpperCase()}
                                             </Avatar>
                                             <Box sx={{ flex: 1, minWidth: 0 }}>
-                                                <Typography variant="h6" fontWeight={700}>{member.name}</Typography>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>{member.email}</Typography>
-                                                <Typography variant="caption" color="text.disabled" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                <Typography variant="h6" fontWeight={700} sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>{member.name}</Typography>
+                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{member.email}</Typography>
+                                                <Typography variant="caption" color="text.disabled" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
                                                     Joined {new Date(member.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                 </Typography>
                                             </Box>
 
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, flexWrap: 'wrap', mt: { xs: 1, sm: 0 }, width: { xs: '100%', sm: 'auto' } }}>
                                                 <Chip
                                                     icon={status.icon}
                                                     label={status.label}
@@ -274,9 +275,9 @@ const Members = () => {
                                                     <Button
                                                         size="small"
                                                         variant="text"
-                                                        startIcon={<TrendingUp />}
+                                                        startIcon={<TrendingUp sx={{ fontSize: { xs: 16, sm: 20 } }} />}
                                                         onClick={() => handleViewStats(member)}
-                                                        sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, color: '#6366F1' }}
+                                                        sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, color: '#6366F1', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
                                                     >
                                                         View Stats
                                                     </Button>
@@ -319,37 +320,109 @@ const Members = () => {
             </motion.div>
 
             {/* Stats Dialog */}
-            <Dialog open={statsOpen} onClose={() => setStatsOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-                <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                        <Typography fontWeight={700}>{selectedMember?.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{selectedMember?.email}</Typography>
+            <Dialog
+                open={statsOpen}
+                onClose={() => setStatsOpen(false)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        background: 'linear-gradient(135deg, #1e1e2f 0%, #151522 100%)',
+                        boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        overflow: 'hidden'
+                    }
+                }}
+            >
+                <DialogTitle sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    backdropFilter: 'blur(10px)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    pb: 2, pt: 2.5,
+                    position: 'relative',
+                    zIndex: 2
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                            width: 48,
+                            height: 48,
+                            fontSize: '1.25rem',
+                            fontWeight: 700,
+                            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+                        }}>
+                            {selectedMember?.name?.[0]?.toUpperCase()}
+                        </Avatar>
+                        <Box>
+                            <Typography variant="h6" fontWeight={700} sx={{ color: 'white', lineHeight: 1.2 }}>{selectedMember?.name}</Typography>
+                            <Typography variant="caption" sx={{ color: '#9ca3af' }}>{selectedMember?.email}</Typography>
+                        </Box>
                     </Box>
-                    <IconButton onClick={() => setStatsOpen(false)}><Close /></IconButton>
+                    <IconButton onClick={() => setStatsOpen(false)} sx={{ color: '#6b7280', '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}><Close /></IconButton>
                 </DialogTitle>
-                <DialogContent dividers>
+                <DialogContent sx={{ p: { xs: 2.5, sm: 4 }, pt: { xs: 7, sm: 5 }, background: 'rgba(0,0,0,0.2)', overflowX: 'hidden' }}>
                     {statsLoading ? (
-                        <Box sx={{ py: 4, textAlign: 'center' }}><CircularProgress /></Box>
+                        <Box sx={{ py: 6, textAlign: 'center' }}><CircularProgress /></Box>
                     ) : stats ? (
-                        <Grid container spacing={2}>
+                        <Grid container spacing={{ xs: 2.5, sm: 3 }} sx={{ mt: { xs: 1, sm: 0 } }}>
                             {[
-                                { label: 'Total Transactions', value: stats.totalTransactions, icon: <Receipt />, color: '#6366F1' },
-                                { label: 'Total Income', value: fmt(stats.totalIncome), icon: <TrendingUp />, color: '#10B981' },
-                                { label: 'Total Expense', value: fmt(stats.totalExpense), icon: <Receipt />, color: '#EF4444' },
+                                { label: 'Total Transactions', value: stats.totalTransactions, icon: <Receipt sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem' } }} />, color: '#818cf8', bg: 'rgba(129, 140, 248, 0.15)' },
+                                { label: 'Total Income', value: fmt(stats.totalIncome), icon: <TrendingUp sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem' } }} />, color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)' },
+                                { label: 'Total Expense', value: fmt(stats.totalExpense), icon: <Receipt sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem' } }} />, color: '#fb7185', bg: 'rgba(251, 113, 133, 0.15)' },
                             ].map((s) => (
                                 <Grid item xs={12} sm={4} key={s.label}>
-                                    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2, border: '1px solid', borderColor: 'divider', textAlign: 'center' }}>
-                                        <Box sx={{ color: s.color, mb: 1 }}>{s.icon}</Box>
-                                        <Typography variant="h6" fontWeight={800} sx={{ color: s.color }}>{s.value}</Typography>
-                                        <Typography variant="caption" color="text.secondary">{s.label}</Typography>
-                                    </Paper>
+                                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                                        <Paper elevation={0} sx={{
+                                            p: { xs: 2.5, sm: 3 },
+                                            borderRadius: 3,
+                                            background: 'rgba(255, 255, 255, 0.04)',
+                                            backdropFilter: 'blur(5px)',
+                                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: 2,
+                                            boxShadow: `0 4px 20px rgba(0, 0, 0, 0.2), 0 0 15px ${s.bg}`,
+                                            transition: 'transform 0.2s',
+                                            '&:hover': { transform: 'translateY(-4px)', background: 'rgba(255, 255, 255, 0.07)' }
+                                        }}>
+                                            <Box>
+                                                <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.65rem' }}>{s.label}</Typography>
+                                                <Typography variant="h5" fontWeight={800} sx={{ color: 'white', mt: 0.5, fontSize: { xs: '1.5rem', sm: '1.75rem' }, textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>{s.value}</Typography>
+                                            </Box>
+                                            <Box sx={{
+                                                color: s.color,
+                                                bgcolor: s.bg,
+                                                width: { xs: 52, sm: 60 },
+                                                height: { xs: 52, sm: 60 },
+                                                borderRadius: 3, // Squircle look
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                boxShadow: `inset 0 0 10px ${s.bg}`
+                                            }}>
+                                                {s.icon}
+                                            </Box>
+                                        </Paper>
+                                    </motion.div>
                                 </Grid>
                             ))}
                             {stats.lastActivity && (
                                 <Grid item xs={12}>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Last activity: {new Date(stats.lastActivity).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </Typography>
+                                    <Box sx={{ mt: 1, p: 2, borderRadius: 2, background: 'rgba(255, 255, 255, 0.03)', border: '1px dashed rgba(255,255,255,0.15)', textAlign: 'center' }}>
+                                        <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+                                            <Box component="span" sx={{ color: '#34d399', mr: 1, display: 'inline-flex', alignItems: 'center' }}>
+                                                <Circle sx={{ fontSize: 8, mr: 0.5 }} /> Online
+                                            </Box>
+                                            Last activity: <Box component="span" sx={{ color: 'white', fontWeight: 600 }}>{new Date(stats.lastActivity).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</Box>
+                                        </Typography>
+                                    </Box>
                                 </Grid>
                             )}
                         </Grid>
@@ -357,8 +430,23 @@ const Members = () => {
                         <Typography color="text.secondary">No transactions recorded.</Typography>
                     )}
                 </DialogContent>
-                <DialogActions sx={{ p: 2.5 }}>
-                    <Button onClick={() => setStatsOpen(false)} sx={{ textTransform: 'none' }}>Close</Button>
+                <DialogActions sx={{ p: 2.5, background: 'rgba(255, 255, 255, 0.02)', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <Button
+                        onClick={() => setStatsOpen(false)}
+                        variant="contained"
+                        sx={{
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                            color: 'white',
+                            px: 3,
+                            '&:hover': {
+                                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                            }
+                        }}
+                    >
+                        Close
+                    </Button>
                 </DialogActions>
             </Dialog>
         </Box>

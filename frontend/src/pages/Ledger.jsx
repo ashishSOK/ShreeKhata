@@ -545,18 +545,18 @@ const Ledger = () => {
                                 >
                                     <Card
                                         sx={{
-                                            mb: 2,
-                                            p: 2,
+                                            mb: 1.5,
+                                            p: 1.5,
                                             background: 'rgba(99, 102, 241, 0.05)',
                                             border: `1px solid ${getTransactionTypeColor(transaction.type)}40`,
                                         }}
                                     >
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                                             <Box>
-                                                <Typography variant="subtitle2" color="text.secondary">
+                                                <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                                                     {formatDate(transaction.date)}
                                                 </Typography>
-                                                <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                                                <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.25, fontSize: '1.1rem' }}>
                                                     {formatCurrency(transaction.amount)}
                                                 </Typography>
                                             </Box>
@@ -567,51 +567,53 @@ const Ledger = () => {
                                                     bgcolor: `${getTransactionTypeColor(transaction.type)}20`,
                                                     color: getTransactionTypeColor(transaction.type),
                                                     fontWeight: 600,
+                                                    fontSize: '0.7rem',
+                                                    height: '20px',
                                                     textTransform: 'capitalize',
                                                 }}
                                             />
                                         </Box>
 
-                                        <Box sx={{ mb: 1.5 }}>
-                                            <Typography variant="body2" color="text.secondary">
+                                        <Box sx={{ mb: 1 }}>
+                                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                                                 Category: <strong>{transaction.category}</strong>
                                             </Typography>
                                             {transaction.vendor && (
-                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: '0.8rem' }}>
                                                     Vendor: <strong>{transaction.vendor}</strong>
                                                 </Typography>
                                             )}
-                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                                                Payment: <Chip label={transaction.paymentMode} size="small" variant="outlined" sx={{ ml: 0.5 }} />
+                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: '0.8rem' }}>
+                                                Payment: <Chip label={transaction.paymentMode} size="small" variant="outlined" sx={{ ml: 0.5, fontSize: '0.7rem', height: '18px' }} />
                                             </Typography>
                                             {transaction.addedBy && (
-                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                                                    Added by: <Chip label={transaction.addedBy.name || 'Owner'} size="small" sx={{ ml: 0.5, bgcolor: 'rgba(99,102,241,0.1)', color: '#6366f1' }} />
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: '0.8rem' }}>
+                                                    Added by: <Chip label={transaction.addedBy.name || 'Owner'} size="small" sx={{ ml: 0.5, fontSize: '0.7rem', height: '18px', bgcolor: 'rgba(99,102,241,0.1)', color: '#6366f1' }} />
                                                 </Typography>
                                             )}
                                         </Box>
 
-                                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                                             <IconButton
                                                 size="small"
                                                 onClick={() => handleViewReceipts(transaction._id)}
-                                                sx={{ color: '#3b82f6' }}
+                                                sx={{ color: '#3b82f6', p: 0.5 }}
                                             >
-                                                <Visibility fontSize="small" />
+                                                <Visibility sx={{ fontSize: '1.25rem' }} />
                                             </IconButton>
                                             <IconButton
                                                 size="small"
                                                 onClick={() => handleOpenDialog(transaction)}
-                                                sx={{ color: '#6366f1' }}
+                                                sx={{ color: '#6366f1', p: 0.5 }}
                                             >
-                                                <Edit fontSize="small" />
+                                                <Edit sx={{ fontSize: '1.25rem' }} />
                                             </IconButton>
                                             <IconButton
                                                 size="small"
                                                 onClick={() => handleDelete(transaction._id)}
-                                                sx={{ color: '#ef4444' }}
+                                                sx={{ color: '#ef4444', p: 0.5 }}
                                             >
-                                                <Delete fontSize="small" />
+                                                <Delete sx={{ fontSize: '1.25rem' }} />
                                             </IconButton>
                                         </Box>
                                     </Card>

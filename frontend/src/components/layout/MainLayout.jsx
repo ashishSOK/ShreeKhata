@@ -285,7 +285,7 @@ const MainLayout = () => {
                 }}
             >
                 <Toolbar />
-                <Box sx={{ p: { xs: 2, md: 3 }, pb: { xs: 10, md: 3 } }}>
+                <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 }, pb: { xs: 10, md: 3 } }}>
                     <Box sx={{ maxWidth: '1600px', mx: 'auto' }}>
                         <Outlet />
                     </Box>

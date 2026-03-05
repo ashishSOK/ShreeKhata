@@ -19,6 +19,12 @@ body {
   overflow-x: hidden;
 }
 
+@media (max-width: 900px) {
+  body {
+    zoom: 0.9;
+  }
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }

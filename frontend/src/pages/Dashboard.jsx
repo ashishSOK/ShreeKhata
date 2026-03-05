@@ -62,8 +62,8 @@ const StatCard = memo(({ title, value, icon, color, trend, delay = 0 }) => (
                 },
             }}
         >
-            <CardContent sx={{ position: 'relative', zIndex: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+            <CardContent sx={{ position: 'relative', zIndex: 1, p: { xs: 1.5, sm: 2 } }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 1, sm: 2 } }}>
                     <motion.div
                         whileHover={{ scale: 1.1, rotate: 5 }}
                         transition={{ type: 'spring', stiffness: 400 }}
@@ -71,8 +71,8 @@ const StatCard = memo(({ title, value, icon, color, trend, delay = 0 }) => (
                         <Box
                             sx={{
                                 bgcolor: `${color}25`,
-                                borderRadius: 2.5,
-                                p: 1.5,
+                                borderRadius: { xs: 1.5, sm: 2.5 },
+                                p: { xs: 0.5, sm: 1.5 },
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -105,16 +105,17 @@ const StatCard = memo(({ title, value, icon, color, trend, delay = 0 }) => (
                     sx={{
                         fontWeight: 700,
                         mb: 0.5,
-                        fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+                        fontSize: { xs: '0.8rem', sm: '1.75rem', md: '2.125rem' },
                         background: `linear-gradient(135deg, ${color}, ${color}dd)`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
+                        lineHeight: { xs: 1.2, sm: 1.5 },
                     }}
                 >
                     {value}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: { xs: '0.55rem', sm: '0.875rem' }, lineHeight: 1.1 }}>
                     {title}
                 </Typography>
             </CardContent>
@@ -203,49 +204,49 @@ const Dashboard = () => {
             <Typography
                 variant="h4"
                 sx={{
-                    mb: { xs: 2, md: 3 },
+                    mb: { xs: 1.5, md: 3 },
                     fontWeight: 700,
-                    fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' }
+                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' }
                 }}
             >
                 Dashboard
             </Typography>
 
             {/* Summary Cards */}
-            <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 3, md: 4 } }}>
-                <Grid item xs={12} sm={6} lg={3}>
+            <Grid container spacing={{ xs: 1, md: 3 }} sx={{ mb: { xs: 2.5, md: 4 } }}>
+                <Grid item xs={3} sm={6} lg={3}>
                     <StatCard
                         title="Today's Expense"
                         value={formatCurrency(summary?.today?.expense || 0)}
-                        icon={Number(summary?.today?.expense || 0) > 0 ? <TrendingDown sx={{ color: '#ef4444' }} /> : <TrendingUp sx={{ color: '#10b981' }} />}
+                        icon={Number(summary?.today?.expense || 0) > 0 ? <TrendingDown sx={{ color: '#ef4444', fontSize: { xs: '1rem', sm: '1.5rem' } }} /> : <TrendingUp sx={{ color: '#10b981', fontSize: { xs: '1rem', sm: '1.5rem' } }} />}
                         color={Number(summary?.today?.expense || 0) > 0 ? '#ef4444' : '#10b981'}
                         delay={0}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} lg={3}>
+                <Grid item xs={3} sm={6} lg={3}>
                     <StatCard
                         title="Net Balance"
                         value={formatCurrency(summary?.netBalance || 0)}
-                        icon={<AccountBalance sx={{ color: '#3b82f6' }} />}
+                        icon={<AccountBalance sx={{ color: '#3b82f6', fontSize: { xs: '1rem', sm: '1.5rem' } }} />}
                         color="#3b82f6"
                         trend={null}
                         delay={0.1}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} lg={3}>
+                <Grid item xs={3} sm={6} lg={3}>
                     <StatCard
                         title="Monthly Expense"
                         value={formatCurrency(summary?.month?.expense || 0)}
-                        icon={<TrendingDown sx={{ color: '#ec4899' }} />}
+                        icon={<TrendingDown sx={{ color: '#ec4899', fontSize: { xs: '1rem', sm: '1.5rem' } }} />}
                         color="#ec4899"
                         delay={0.2}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} lg={3}>
+                <Grid item xs={3} sm={6} lg={3}>
                     <StatCard
                         title="Monthly Income"
                         value={formatCurrency(summary?.month?.income || 0)}
-                        icon={<TrendingUp sx={{ color: '#10b981' }} />}
+                        icon={<TrendingUp sx={{ color: '#10b981', fontSize: { xs: '1rem', sm: '1.5rem' } }} />}
                         color="#10b981"
                         delay={0.3}
                     />
@@ -253,9 +254,9 @@ const Dashboard = () => {
             </Grid>
 
             {/* Charts */}
-            <Grid container spacing={{ xs: 2, md: 3 }}>
+            <Grid container spacing={{ xs: 1, md: 3 }}>
                 {/* Spending Trend */}
-                <Grid item xs={12} lg={8}>
+                <Grid item xs={6} lg={8}>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -272,12 +273,13 @@ const Dashboard = () => {
                                 height: '100%',
                             }}
                         >
-                            <CardContent>
+                            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                                 <Typography
                                     variant="h6"
                                     sx={{
-                                        mb: 3,
+                                        mb: { xs: 2, sm: 3 },
                                         fontWeight: 700,
+                                        fontSize: { xs: '1rem', sm: '1.25rem' },
                                         background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                                         WebkitBackgroundClip: 'text',
                                         WebkitTextFillColor: 'transparent',
@@ -286,8 +288,8 @@ const Dashboard = () => {
                                 >
                                     📈 Spending Trend (Last 30 Days)
                                 </Typography>
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <LineChart data={trend}>
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <LineChart data={trend} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(99, 102, 241, 0.1)" />
                                         <XAxis
                                             dataKey="date"
@@ -296,7 +298,8 @@ const Dashboard = () => {
                                         />
                                         <YAxis
                                             stroke={theme.palette.text.secondary}
-                                            style={{ fontSize: 12 }}
+                                            style={{ fontSize: 10 }}
+                                            tickFormatter={(value) => value > 1000 ? `${(value / 1000).toFixed(0)}k` : value}
                                         />
                                         <Tooltip
                                             contentStyle={{
@@ -307,22 +310,22 @@ const Dashboard = () => {
                                                 boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
                                             }}
                                         />
-                                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                        <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '10px' }} />
                                         <Line
                                             type="monotone"
                                             dataKey="expense"
                                             stroke="#ef4444"
-                                            strokeWidth={3}
-                                            dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
-                                            activeDot={{ r: 6, strokeWidth: 0 }}
+                                            strokeWidth={2}
+                                            dot={{ fill: '#ef4444', strokeWidth: 1, r: 2 }}
+                                            activeDot={{ r: 4, strokeWidth: 0 }}
                                         />
                                         <Line
                                             type="monotone"
                                             dataKey="income"
                                             stroke="#10b981"
-                                            strokeWidth={3}
-                                            dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                                            activeDot={{ r: 6, strokeWidth: 0 }}
+                                            strokeWidth={2}
+                                            dot={{ fill: '#10b981', strokeWidth: 1, r: 2 }}
+                                            activeDot={{ r: 4, strokeWidth: 0 }}
                                         />
                                     </LineChart>
                                 </ResponsiveContainer>
@@ -332,7 +335,7 @@ const Dashboard = () => {
                 </Grid>
 
                 {/* Category Distribution */}
-                <Grid item xs={12} lg={4}>
+                <Grid item xs={6} lg={4}>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -349,12 +352,13 @@ const Dashboard = () => {
                                 height: '100%',
                             }}
                         >
-                            <CardContent>
+                            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                                 <Typography
                                     variant="h6"
                                     sx={{
-                                        mb: 3,
+                                        mb: { xs: 2, sm: 3 },
                                         fontWeight: 700,
+                                        fontSize: { xs: '1rem', sm: '1.25rem' },
                                         background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
                                         WebkitBackgroundClip: 'text',
                                         WebkitTextFillColor: 'transparent',
@@ -363,7 +367,7 @@ const Dashboard = () => {
                                 >
                                     🎯 Category Distribution
                                 </Typography>
-                                <ResponsiveContainer width="100%" height={300}>
+                                <ResponsiveContainer width="100%" height={200}>
                                     <PieChart>
                                         <Pie
                                             data={categoryDist}
@@ -383,7 +387,7 @@ const Dashboard = () => {
                                                         fill="white"
                                                         textAnchor="middle"
                                                         dominantBaseline="central"
-                                                        fontSize={14}
+                                                        fontSize={{ xs: 8, sm: 14 }}
                                                         fontWeight="bold"
                                                         style={{ filter: 'drop-shadow(0px 0px 2px rgba(0,0,0,0.5))' }}
                                                     >
@@ -391,8 +395,8 @@ const Dashboard = () => {
                                                     </text>
                                                 ) : null;
                                             }}
-                                            outerRadius={85}
-                                            innerRadius={40}
+                                            outerRadius={55}
+                                            innerRadius={25}
                                             fill="#8884d8"
                                             dataKey="value"
                                             paddingAngle={2}
@@ -419,7 +423,7 @@ const Dashboard = () => {
                                             layout="horizontal"
                                             verticalAlign="bottom"
                                             align="center"
-                                            wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                                            wrapperStyle={{ fontSize: '9px', paddingTop: '2px' }}
                                         />
                                     </PieChart>
                                 </ResponsiveContainer>
@@ -444,12 +448,13 @@ const Dashboard = () => {
                                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                             }}
                         >
-                            <CardContent>
+                            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                                 <Typography
                                     variant="h6"
                                     sx={{
-                                        mb: 3,
+                                        mb: { xs: 2, sm: 3 },
                                         fontWeight: 700,
+                                        fontSize: { xs: '1rem', sm: '1.25rem' },
                                         background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
                                         WebkitBackgroundClip: 'text',
                                         WebkitTextFillColor: 'transparent',
@@ -519,12 +524,13 @@ const Dashboard = () => {
                                 height: '100%',
                             }}
                         >
-                            <CardContent>
+                            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                                 <Typography
                                     variant="h6"
                                     sx={{
-                                        mb: 3,
+                                        mb: { xs: 2, sm: 3 },
                                         fontWeight: 700,
+                                        fontSize: { xs: '1rem', sm: '1.25rem' },
                                         background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)',
                                         WebkitBackgroundClip: 'text',
                                         WebkitTextFillColor: 'transparent',
@@ -533,7 +539,7 @@ const Dashboard = () => {
                                 >
                                     💳 Payment Mode (This Month)
                                 </Typography>
-                                <Grid container spacing={3}>
+                                <Grid container spacing={{ xs: 1.5, sm: 3 }}>
                                     <Grid item xs={6}>
                                         <motion.div
                                             whileHover={{ scale: 1.05, y: -5 }}
@@ -542,7 +548,7 @@ const Dashboard = () => {
                                             <Box
                                                 sx={{
                                                     textAlign: 'center',
-                                                    p: 3,
+                                                    p: { xs: 1.5, sm: 3 },
                                                     background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.05) 100%)',
                                                     border: '1px solid rgba(99, 102, 241, 0.3)',
                                                     borderRadius: 3,
@@ -550,18 +556,19 @@ const Dashboard = () => {
                                                     transition: 'all 0.3s ease',
                                                 }}
                                             >
-                                                <AccountBalance sx={{ fontSize: 56, color: '#6366f1', mb: 1.5 }} />
+                                                <AccountBalance sx={{ fontSize: { xs: 32, sm: 56 }, color: '#6366f1', mb: { xs: 0.5, sm: 1.5 } }} />
                                                 <Typography
                                                     variant="h4"
                                                     sx={{
                                                         fontWeight: 700,
                                                         color: '#6366f1',
                                                         mb: 0.5,
+                                                        fontSize: { xs: '1.25rem', sm: '2.125rem' }
                                                     }}
                                                 >
                                                     {formatCurrency(summary?.month?.cash || 0)}
                                                 </Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                                                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: { xs: '0.8rem', sm: '1rem' } }}>
                                                     Cash
                                                 </Typography>
                                             </Box>
@@ -575,7 +582,7 @@ const Dashboard = () => {
                                             <Box
                                                 sx={{
                                                     textAlign: 'center',
-                                                    p: 3,
+                                                    p: { xs: 1.5, sm: 3 },
                                                     background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%)',
                                                     border: '1px solid rgba(139, 92, 246, 0.3)',
                                                     borderRadius: 3,
@@ -583,18 +590,19 @@ const Dashboard = () => {
                                                     transition: 'all 0.3s ease',
                                                 }}
                                             >
-                                                <CreditCard sx={{ fontSize: 56, color: '#8b5cf6', mb: 1.5 }} />
+                                                <CreditCard sx={{ fontSize: { xs: 32, sm: 56 }, color: '#8b5cf6', mb: { xs: 0.5, sm: 1.5 } }} />
                                                 <Typography
                                                     variant="h4"
                                                     sx={{
                                                         fontWeight: 700,
                                                         color: '#8b5cf6',
                                                         mb: 0.5,
+                                                        fontSize: { xs: '1.25rem', sm: '2.125rem' }
                                                     }}
                                                 >
                                                     {formatCurrency(summary?.month?.online || 0)}
                                                 </Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                                                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: { xs: '0.8rem', sm: '1rem' } }}>
                                                     Online
                                                 </Typography>
                                             </Box>

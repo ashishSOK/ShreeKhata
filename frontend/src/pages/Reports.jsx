@@ -94,9 +94,9 @@ const Reports = () => {
             <Typography
                 variant="h4"
                 sx={{
-                    mb: { xs: 2, md: 3 },
+                    mb: { xs: 1.5, md: 3 },
                     fontWeight: 700,
-                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' }
+                    fontSize: { xs: '1.25rem', sm: '1.75rem', md: '2.125rem' }
                 }}
             >
                 Reports & Analytics
@@ -104,7 +104,7 @@ const Reports = () => {
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-            <Grid container spacing={{ xs: 2, md: 3 }}>
+            <Grid container spacing={{ xs: 1.5, md: 3 }}>
                 {/* Report Configuration */}
                 <Grid item xs={12} lg={4}>
                     <motion.div
@@ -114,7 +114,7 @@ const Reports = () => {
                     >
                         <Card
                             sx={{
-                                p: 3,
+                                p: { xs: 2, sm: 3 },
                                 background: 'rgba(255, 255, 255, 0.03)',
                                 backdropFilter: 'blur(20px)',
                                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -122,17 +122,19 @@ const Reports = () => {
                                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                             }}
                         >
-                            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                            <Typography variant="h6" sx={{ mb: { xs: 2, sm: 3 }, fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                                 Generate Report
                             </Typography>
 
-                            <Stack spacing={3}>
+                            <Stack spacing={{ xs: 2, sm: 3 }}>
                                 <TextField
                                     fullWidth
                                     select
                                     label="Report Type"
                                     value={reportType}
                                     onChange={(e) => setReportType(e.target.value)}
+                                    size="small"
+                                    sx={{ '& .MuiInputBase-root': { fontSize: { xs: '0.875rem', sm: '1rem' } } }}
                                 >
                                     <MenuItem value="monthly">Monthly Report</MenuItem>
                                     <MenuItem value="vendor">Vendor Report</MenuItem>
@@ -147,6 +149,8 @@ const Reports = () => {
                                         value={month}
                                         onChange={(e) => setMonth(e.target.value)}
                                         InputLabelProps={{ shrink: true }}
+                                        size="small"
+                                        sx={{ '& .MuiInputBase-root': { fontSize: { xs: '0.875rem', sm: '1rem' } } }}
                                     />
                                 )}
 
@@ -257,7 +261,7 @@ const Reports = () => {
                     >
                         <Card
                             sx={{
-                                p: 3,
+                                p: { xs: 2, sm: 3 },
                                 background: 'rgba(255, 255, 255, 0.03)',
                                 backdropFilter: 'blur(20px)',
                                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -265,7 +269,7 @@ const Reports = () => {
                                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                             }}
                         >
-                            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                            <Typography variant="h6" sx={{ mb: { xs: 2, sm: 3 }, fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                                 Report Results
                             </Typography>
 
@@ -284,8 +288,8 @@ const Reports = () => {
                             ) : (
                                 <Box>
                                     {/* Summary Cards */}
-                                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                                        <Grid item xs={12} sm={4}>
+                                    <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 2, sm: 3 } }}>
+                                        <Grid item xs={6} sm={4}>
                                             <motion.div
                                                 initial={{ opacity: 0, scale: 0.95 }}
                                                 animate={{ opacity: 1, scale: 1 }}
@@ -294,19 +298,20 @@ const Reports = () => {
                                             >
                                                 <Card
                                                     sx={{
-                                                        p: 2.5,
+                                                        p: { xs: 1.5, sm: 2.5 },
                                                         background: 'linear-gradient(135deg, #ef444420 0%, #ef444408 100%)',
                                                         border: '1px solid #ef444430',
                                                         boxShadow: '0 4px 16px rgba(239, 68, 68, 0.2)',
                                                     }}
                                                 >
-                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>Total Expense</Typography>
+                                                    <Typography variant="body2" sx={{ fontWeight: 500, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Total Expense</Typography>
                                                     <Typography
                                                         variant="h5"
                                                         sx={{
                                                             fontWeight: 700,
                                                             color: '#ef4444',
                                                             mt: 0.5,
+                                                            fontSize: { xs: '1.25rem', sm: '1.5rem' }
                                                         }}
                                                     >
                                                         {formatCurrency(reportData.summary?.totalExpense || 0)}
@@ -314,7 +319,7 @@ const Reports = () => {
                                                 </Card>
                                             </motion.div>
                                         </Grid>
-                                        <Grid item xs={12} sm={4}>
+                                        <Grid item xs={6} sm={4}>
                                             <motion.div
                                                 initial={{ opacity: 0, scale: 0.95 }}
                                                 animate={{ opacity: 1, scale: 1 }}
@@ -323,19 +328,20 @@ const Reports = () => {
                                             >
                                                 <Card
                                                     sx={{
-                                                        p: 2.5,
+                                                        p: { xs: 1.5, sm: 2.5 },
                                                         background: 'linear-gradient(135deg, #10b98120 0%, #10b98108 100%)',
                                                         border: '1px solid #10b98130',
                                                         boxShadow: '0 4px 16px rgba(16, 185, 129, 0.2)',
                                                     }}
                                                 >
-                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>Total Income</Typography>
+                                                    <Typography variant="body2" sx={{ fontWeight: 500, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Total Income</Typography>
                                                     <Typography
                                                         variant="h5"
                                                         sx={{
                                                             fontWeight: 700,
                                                             color: '#10b981',
                                                             mt: 0.5,
+                                                            fontSize: { xs: '1.25rem', sm: '1.5rem' }
                                                         }}
                                                     >
                                                         {formatCurrency(reportData.summary?.totalIncome || 0)}
@@ -343,7 +349,7 @@ const Reports = () => {
                                                 </Card>
                                             </motion.div>
                                         </Grid>
-                                        <Grid item xs={12} sm={4}>
+                                        <Grid item xs={6} sm={4}>
                                             <motion.div
                                                 initial={{ opacity: 0, scale: 0.95 }}
                                                 animate={{ opacity: 1, scale: 1 }}
@@ -352,19 +358,20 @@ const Reports = () => {
                                             >
                                                 <Card
                                                     sx={{
-                                                        p: 2.5,
+                                                        p: { xs: 1.5, sm: 2.5 },
                                                         background: 'linear-gradient(135deg, #3b82f620 0%, #3b82f608 100%)',
                                                         border: '1px solid #3b82f630',
                                                         boxShadow: '0 4px 16px rgba(59, 130, 246, 0.2)',
                                                     }}
                                                 >
-                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>Net Balance</Typography>
+                                                    <Typography variant="body2" sx={{ fontWeight: 500, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>Net Balance</Typography>
                                                     <Typography
                                                         variant="h5"
                                                         sx={{
                                                             fontWeight: 700,
                                                             color: '#3b82f6',
                                                             mt: 0.5,
+                                                            fontSize: { xs: '1.25rem', sm: '1.5rem' }
                                                         }}
                                                     >
                                                         {formatCurrency(
@@ -415,14 +422,14 @@ const Reports = () => {
                                             <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
                                                 Category Breakdown
                                             </Typography>
-                                            <Grid container spacing={2}>
+                                            <Grid container spacing={1.5}>
                                                 {reportData.categoryBreakdown.map((item, index) => (
-                                                    <Grid item xs={12} sm={6} md={4} key={index}>
-                                                        <Card sx={{ p: 2 }}>
-                                                            <Typography variant="body2" color="text.secondary">
+                                                    <Grid item xs={6} sm={6} md={4} key={index}>
+                                                        <Card sx={{ p: { xs: 1.5, sm: 2 } }}>
+                                                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                                                                 {item.category}
                                                             </Typography>
-                                                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                                            <Typography variant="h6" sx={{ fontWeight: 700, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                                                                 {formatCurrency(item.total)}
                                                             </Typography>
                                                             <Typography variant="caption" color="text.secondary">
