@@ -583,6 +583,11 @@ const Ledger = () => {
                                                     Vendor: <strong>{transaction.vendor}</strong>
                                                 </Typography>
                                             )}
+                                            {transaction.notes && (
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: '0.8rem' }}>
+                                                    Notes: <strong>{transaction.notes}</strong>
+                                                </Typography>
+                                            )}
                                             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: '0.8rem' }}>
                                                 Payment: <Chip label={transaction.paymentMode} size="small" variant="outlined" sx={{ ml: 0.5, fontSize: '0.7rem', height: '18px' }} />
                                             </Typography>
