@@ -7,13 +7,15 @@ import MainLayout from './components/layout/MainLayout';
 import PageLoader from './components/common/PageLoader';
 import './index.css';
 
-// Lazy load pages
+// Eagerly import frequently-used pages for instant navigation
+import Dashboard from './pages/Dashboard';
+import Ledger from './pages/Ledger';
+import Categories from './pages/Categories';
+
+// Lazy load less-visited pages
 const Welcome = lazy(() => import('./pages/Welcome'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Signup = lazy(() => import('./pages/auth/Signup'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Ledger = lazy(() => import('./pages/Ledger'));
-const Categories = lazy(() => import('./pages/Categories'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Members = lazy(() => import('./pages/Members'));

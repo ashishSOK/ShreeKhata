@@ -90,28 +90,29 @@ const Login = () => {
                     position: 'relative',
                 }}
             >
+                <Box sx={{ position: 'absolute', top: 32, left: 32, display: 'flex', gap: 2, alignItems: 'center', zIndex: 10 }}>
+                    <Button
+                        startIcon={<ArrowBack />}
+                        onClick={() => navigate('/')}
+                        sx={{
+                            color: 'text.secondary',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
+                        }}
+                    >
+                        Back
+                    </Button>
+                    <IconButton onClick={toggleTheme} sx={{ color: 'text.primary' }}>
+                        {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                    </IconButton>
+                </Box>
+
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6 }}
                 >
-                    <Box sx={{ position: 'absolute', top: 32, left: 32, display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <Button
-                            startIcon={<ArrowBack />}
-                            onClick={() => navigate('/')}
-                            sx={{
-                                color: 'text.secondary',
-                                textTransform: 'none',
-                                fontWeight: 600,
-                                '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
-                            }}
-                        >
-                            Back
-                        </Button>
-                        <IconButton onClick={toggleTheme} sx={{ color: 'text.primary' }}>
-                            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-                        </IconButton>
-                    </Box>
 
                     <Box sx={{ mb: 6 }}>
                         <Typography

@@ -186,21 +186,20 @@ const Signup = () => {
                     position: 'relative',
                 }}
             >
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-                    {/* Top nav */}
-                    <Box sx={{ position: 'absolute', top: 32, left: 32, display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <Button
-                            startIcon={<ArrowBack />}
-                            onClick={() => step === 0 ? navigate('/') : setStep(0)}
-                            sx={{ color: 'text.secondary', textTransform: 'none', fontWeight: 600, '&:hover': { color: 'text.primary', bgcolor: 'transparent' } }}
-                        >
-                            {step === 0 ? 'Back' : 'Choose Role'}
-                        </Button>
-                        <IconButton onClick={toggleTheme} sx={{ color: 'text.primary' }}>
-                            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-                        </IconButton>
-                    </Box>
+                <Box sx={{ position: 'absolute', top: 32, left: 32, display: 'flex', gap: 2, alignItems: 'center', zIndex: 10 }}>
+                    <Button
+                        startIcon={<ArrowBack />}
+                        onClick={() => step === 0 ? navigate('/') : setStep(0)}
+                        sx={{ color: 'text.secondary', textTransform: 'none', fontWeight: 600, '&:hover': { color: 'text.primary', bgcolor: 'transparent' } }}
+                    >
+                        {step === 0 ? 'Back' : 'Choose Role'}
+                    </Button>
+                    <IconButton onClick={toggleTheme} sx={{ color: 'text.primary' }}>
+                        {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                    </IconButton>
+                </Box>
 
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
                     <AnimatePresence mode="wait">
 
                         {/* Step 0: Role Selection */}

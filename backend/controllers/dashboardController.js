@@ -27,7 +27,7 @@ export const getSummary = async (req, res) => {
         const userId = new mongoose.Types.ObjectId(getOwnerUserId(req.user));
 
         // Run all queries in parallel
-        const [todayStats, weekStats, monthStats] = await Promise.all([
+        const [todayStats, weekStats, monthStats, rentStats] = await Promise.all([
             // Today's stats
             Transaction.aggregate([
                 {
@@ -131,6 +131,24 @@ export const getSummary = async (req, res) => {
                         }
                     }
                 }
+            ]),
+
+            // Monthly Rent
+            Transaction.aggregate([
+                {
+                    $match: {
+                        user: userId,
+                        date: { $gte: monthAgo, $lt: tomorrow },
+                        type: { $in: ['expense', 'purchase'] },
+                        category: { $regex: /rent/i }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        rent: { $sum: '$amount' }
+                    }
+                }
             ])
         ]);
 
@@ -182,7 +200,8 @@ export const getSummary = async (req, res) => {
                 expense: monthStats[0]?.expense || 0,
                 income: monthStats[0]?.income || 0,
                 cash: monthStats[0]?.cash || 0,
-                online: monthStats[0]?.online || 0
+                online: monthStats[0]?.online || 0,
+                rent: rentStats[0]?.rent || 0
             }
         });
     } catch (error) {

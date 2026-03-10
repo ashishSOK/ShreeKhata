@@ -106,9 +106,6 @@ const Ledger = () => {
     const loadTransactions = async () => {
         try {
             setLoading(true);
-            // Add artificial delay for smoother loading experience
-            await new Promise(resolve => setTimeout(resolve, 500));
-
             const response = await transactionAPI.getAll({
                 page,
                 limit: 10,
