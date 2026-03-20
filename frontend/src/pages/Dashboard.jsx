@@ -214,7 +214,8 @@ const Dashboard = () => {
         { title: 'Net Balance', value: formatCurrency(summary?.netBalance || 0), color: '#3b82f6', icon: <AccountBalance sx={{ ...iconSz, color: '#3b82f6' }} /> },
         { title: 'Monthly Expense', value: formatCurrency(summary?.month?.expense || 0), color: '#ec4899', icon: <TrendingDown sx={{ ...iconSz, color: '#ec4899' }} /> },
         { title: 'Monthly Income', value: formatCurrency(summary?.month?.income || 0), color: '#10b981', icon: <TrendingUp sx={{ ...iconSz, color: '#10b981' }} /> },
-        { title: 'Monthly Rent', value: formatCurrency(summary?.month?.rent || 0), color: '#f59e0b', icon: <Home sx={{ ...iconSz, color: '#f59e0b' }} /> },
+        { title: 'Monthly Rent Exp.', value: formatCurrency(summary?.month?.rent || 0), color: '#f59e0b', icon: <Home sx={{ ...iconSz, color: '#f59e0b' }} /> },
+        { title: 'Monthly Rent Inc.', value: formatCurrency(summary?.month?.rentIncome || 0), color: '#8b5cf6', icon: <Home sx={{ ...iconSz, color: '#8b5cf6' }} /> },
     ];
 
     const fmtTrend = trend.map(d => ({
@@ -250,16 +251,13 @@ const Dashboard = () => {
                 </Typography>
             </motion.div>
 
-            {/* ── Stat Cards: 2-col on mobile, 5 equal cols on desktop ── */}
+            {/* ── Stat Cards ── */}
             <Grid container spacing={{ xs: 1.25, sm: 1.5, md: 2 }} sx={{ mb: { xs: 2, md: 3.5 } }}>
-                {statCards.slice(0, 4).map((card, i) => (
-                    <Grid item xs={6} sm={4} lg={2.4} key={i}>
+                {statCards.map((card, i) => (
+                    <Grid item xs={6} sm={4} lg={2} key={i}>
                         <StatCard {...card} isDark={isDark} delay={i * 0.07} />
                     </Grid>
                 ))}
-                <Grid item xs={12} sm={4} lg={2.4}>
-                    <StatCard {...statCards[4]} isDark={isDark} delay={0.28} />
-                </Grid>
             </Grid>
 
             {/* ── Charts ── */}
